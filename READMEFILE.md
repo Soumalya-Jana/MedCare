@@ -331,6 +331,18 @@ erDiagram
         varchar payment_mode
     }
 ```
+### 📥 Database Schema Download
+
+The database schema is available in the repository root directory.
+
+**[Download Database Schema (SQL)](./Hospital_Management_Database_PUBLIC.sql)**
+
+- **Database:** MySQL 8.0
+- **Cloud Provider:** Aiven
+- **Schema:** `defaultdb`
+- **Contents:** Table structures and database schema without actual records.
+
+Import the SQL file into MySQL Workbench to create the database tables.
 
 ### Summary of Database Tables
 
