@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle ?: 'Register Doctor Profile | MedCare'}">Register Doctor Profile | MedCare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('hms-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body class="auth-page role-doctor">
+
+    <!-- Ambient glow -->
+    <div class="auth-ambient-glow" aria-hidden="true"></div>
+
+    <!-- Theme Switcher Top-Right -->
+    <div style="position:fixed; top:20px; right:24px; z-index:100;">
+        <button type="button" class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" title="Switch Light/Dark Theme">
+            <div class="toggle-track">
+                <i class='bx bxs-sun icon-sun'></i>
+                <i class='bx bxs-moon icon-moon'></i>
+                <span class="toggle-thumb"></span>
+            </div>
+        </button>
+    </div>
+
+    <div class="auth-card auth-card-wide role-doctor">
+        <div class="auth-header">
+            <div class="auth-icon-wrap">
+                <i class='bx bx-plus-medical'></i>
+            </div>
+            <div class="auth-role-badge">
+                <i class='bx bx-plus'></i> Attending Physician
+            </div>
+            <h1>Register Consulting Doctor</h1>
+            <p>Setup your clinical profile, specialty, OPD fee &amp; consultation hours</p>
+        </div>
+
+        <!-- Error Alert -->
+        <div th:if="${error}" class="alert alert-danger mb-3">
+            <i class='bx bx-error-circle'></i>
+            <span th:text="${error}">Registration error occurred.</span>
+        </div>
+
+        <form th:action="@{/register/doctor}" th:object="${doctorDto}" method="post">
+            <div style="font-weight:700; font-size:13px; text-transform:uppercase; color:var(--text-secondary); margin-bottom:12px; letter-spacing:0.04em;">
+                1. Doctor Personal &amp; Contact Details
+            </div>
+
+            <div class="auth-grid-2">
+                <div class="auth-input-group">
+                    <label for="fullName">Full Doctor Name (with title) *</label>
+                    <div class="auth-input-wrapper">
+                        <input type="text" id="fullName" th:field="*{fullName}" class="form-control"
+                               placeholder="e.g. Dr. Ananya Roy" required autofocus>
+                        <i class='bx bx-user-pin auth-input-icon'></i>
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="username">Doctor Username *</label>
+                    <div class="auth-input-wrapper">
+                        <input type="text" id="username" th:field="*{username}" class="form-control"
+                               placeholder="e.g. dr.ananya" required>
+                        <i class='bx bx-at auth-input-icon'></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="auth-grid-2">
+                <div class="auth-input-group">
+                    <label for="email">Medical Email Address</label>
+                    <div class="auth-input-wrapper">
+                        <input type="email" id="email" th:field="*{email}" class="form-control"
+                               placeholder="e.g. ananya.roy@hospital.com">
+                        <i class='bx bx-envelope auth-input-icon'></i>
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="phone">Direct Mobile / Chamber Phone</label>
+                    <div class="auth-input-wrapper">
+                        <input type="tel" id="phone" th:field="*{phone}" class="form-control"
+                               placeholder="e.g. +91 98765 43215">
+                        <i class='bx bx-phone auth-input-icon'></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="auth-grid-2">
+                <div class="auth-input-group">
+                    <label for="gender">Gender</label>
+                    <select id="gender" th:field="*{gender}" class="form-control" style="height:44px;">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="qualification">Medical Qualifications *</label>
+                    <div class="auth-input-wrapper">
+                        <input type="text" id="qualification" th:field="*{qualification}" class="form-control"
+                               placeholder="e.g. MBBS, MD (Cardiology)" required>
+                        <i class='bx bx-certification auth-input-icon'></i>
+                    </div>
+                </div>
+            </div>
+
+            <div style="font-weight:700; font-size:13px; text-transform:uppercase; color:var(--text-secondary); margin:18px 0 12px; letter-spacing:0.04em;">
+                2. Clinical Specialization &amp; Schedule
+            </div>
+
+            <div class="auth-grid-2">
+                <div class="auth-input-group">
+                    <label for="specialization">Department / Specialization *</label>
+                    <select id="specialization" th:field="*{specialization}" class="form-control" style="height:44px;" required>
+                        <option value="">-- Select Medical Department --</option>
+                        <option th:each="spec : ${specializations}" th:value="${spec}" th:text="${spec}">Cardiology</option>
+                    </select>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="consultationFee">Consultation Fee (₹)</label>
+                    <div class="auth-input-wrapper">
+                        <input type="number" id="consultationFee" th:field="*{consultationFee}" class="form-control"
+                               placeholder="500" min="0" step="50">
+                        <i class='bx bx-rupee auth-input-icon'></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="auth-grid-2">
+                <div class="auth-input-group">
+                    <label for="availableDays">Available Consultation Days</label>
+                    <div class="auth-input-wrapper">
+                        <input type="text" id="availableDays" th:field="*{availableDays}" class="form-control"
+                               placeholder="e.g. Mon,Tue,Wed,Thu,Fri">
+                        <i class='bx bx-calendar auth-input-icon'></i>
+                    </div>
+                </div>
+
+                <div class="auth-grid-2" style="gap:8px;">
+                    <div class="auth-input-group">
+                        <label for="availableTimeStart">Start Time</label>
+                        <input type="time" id="availableTimeStart" th:field="*{availableTimeStart}" class="form-control" style="height:44px;">
+                    </div>
+                    <div class="auth-input-group">
+                        <label for="availableTimeEnd">End Time</label>
+                        <input type="time" id="availableTimeEnd" th:field="*{availableTimeEnd}" class="form-control" style="height:44px;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="auth-input-group">
+                <label for="address">Hospital Chamber / OPD Room Location</label>
+                <div class="auth-input-wrapper">
+                    <input type="text" id="address" th:field="*{address}" class="form-control"
+                           placeholder="e.g. Block B, Room 204, OPD Wing">
+                    <i class='bx bx-map-pin auth-input-icon'></i>
+                </div>
+            </div>
+
+            <div style="font-weight:700; font-size:13px; text-transform:uppercase; color:var(--text-secondary); margin:18px 0 12px; letter-spacing:0.04em;">
+                3. Doctor Account Credentials
+            </div>
+
+            <div class="auth-grid-2">
+                <div class="auth-input-group">
+                    <label for="password">Create Password *</label>
+                    <div class="auth-input-wrapper">
+                        <input type="password" id="password" th:field="*{password}" class="form-control"
+                               placeholder="Minimum 6 characters" minlength="6" required>
+                        <i class='bx bx-lock-alt auth-input-icon'></i>
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="confirmPassword">Confirm Password *</label>
+                    <div class="auth-input-wrapper">
+                        <input type="password" id="confirmPassword" th:field="*{confirmPassword}" class="form-control"
+                               placeholder="Re-enter password" minlength="6" required>
+                        <i class='bx bx-check-shield auth-input-icon'></i>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="auth-submit-btn">
+                <i class='bx bx-plus-medical'></i>
+                Register Doctor Clinical Profile
+            </button>
+        </form>
+
+        <div class="auth-footer-links" style="margin-top:24px; border-top:1px solid var(--border-color); padding-top:16px;">
+            <span>
+                Already registered?
+                <a th:href="@{/login/doctor}" style="font-weight:700; color:#059669;">Sign In to Doctor Portal</a>
+            </span>
+            <a th:href="@{/register}" style="color:var(--text-muted);">
+                <i class='bx bx-grid-alt'></i> Other Portals
+            </a>
+        </div>
+    </div>
+
+    <script th:src="@{/js/theme.js}"></script>
+</body>
+</html>

@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head}"></head>
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
-        <div class="page-header">
+        <!-- Page Header -->
+        <div class="page-header bed-hero">
             <div>
                 <h1><i class='bx bxs-bed mr-1'></i> Bed &amp; Ward Management</h1>
                 <p class="text-muted" style="margin-top:4px;">Real-time inpatient bed allocation, ward occupancy, and patient admissions</p>
@@ -18,9 +20,15 @@
             </div>
         </div>
 
+        <!-- Feedback Alerts -->
+        <div th:if="${success}" class="alert alert-success">
+            <i class='bx bx-check-circle'></i>
+            <span th:text="${success}">Bed operation completed successfully!</span>
+        </div>
+
         <!-- Occupancy Stats Cards -->
         <div class="stats-grid mb-4">
-            <div class="stat-card">
+            <div class="stat-card blue">
                 <div class="stat-icon" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">
                     <i class='bx bxs-bed'></i>
                 </div>
@@ -30,7 +38,7 @@
                 </div>
             </div>
 
-            <div class="stat-card">
+            <div class="stat-card green">
                 <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
                     <i class='bx bx-check-circle'></i>
                 </div>
@@ -40,7 +48,7 @@
                 </div>
             </div>
 
-            <div class="stat-card">
+            <div class="stat-card red">
                 <div class="stat-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
                     <i class='bx bx-user-check'></i>
                 </div>
@@ -50,7 +58,7 @@
                 </div>
             </div>
 
-            <div class="stat-card">
+            <div class="stat-card orange">
                 <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
                     <i class='bx bx-pie-chart-alt-2'></i>
                 </div>
@@ -61,34 +69,96 @@
             </div>
         </div>
 
+        <!-- Filter & Search Control Bar -->
+        <div class="card mb-4" style="padding: 16px 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                <!-- Search Form -->
+                <form th:action="@{/beds}" method="get" style="display:flex; gap:12px; flex:1; max-width:480px;">
+                    <input type="hidden" name="status" th:if="${selectedStatus != null}" th:value="${selectedStatus}"/>
+                    <input type="hidden" name="wardId" th:if="${selectedWardId != null}" th:value="${selectedWardId}"/>
+                    <div class="search-input-wrapper" style="flex:1;">
+                        <span class="search-icon"><i class='bx bx-search'></i></span>
+                        <input type="text" name="search" th:value="${search}" placeholder="Search bed number, ward, or patient..." class="form-control" style="padding-left:42px;">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class='bx bx-filter-alt'></i> Search</button>
+                    <a th:if="${search != null or selectedStatus != null or selectedWardId != null}" th:href="@{/beds}" class="btn btn-outline" title="Reset Filters">
+                        <i class='bx bx-reset'></i> Reset
+                    </a>
+                </form>
+
+                <!-- Status Filter Tabs -->
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <span class="text-muted" style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Status:</span>
+                    <a th:href="@{/beds(wardId=${selectedWardId}, search=${search})}" 
+                       class="btn btn-sm" th:classappend="${selectedStatus == null or selectedStatus == 'ALL'} ? 'btn-primary' : 'btn-outline'">
+                        All <span style="margin-left:4px; opacity:0.8;" th:text="'(' + ${totalCount} + ')'">(0)</span>
+                    </a>
+                    <a th:href="@{/beds(status='Available', wardId=${selectedWardId}, search=${search})}" 
+                       class="btn btn-sm" th:classappend="${selectedStatus == 'Available'} ? 'btn-primary' : 'btn-outline'">
+                        Available <span style="margin-left:4px; opacity:0.8;" th:text="'(' + ${availableCount} + ')'">(0)</span>
+                    </a>
+                    <a th:href="@{/beds(status='Occupied', wardId=${selectedWardId}, search=${search})}" 
+                       class="btn btn-sm" th:classappend="${selectedStatus == 'Occupied'} ? 'btn-primary' : 'btn-outline'">
+                        Occupied <span style="margin-left:4px; opacity:0.8;" th:text="'(' + ${occupiedCount} + ')'">(0)</span>
+                    </a>
+                    <a th:href="@{/beds(status='Maintenance', wardId=${selectedWardId}, search=${search})}" 
+                       class="btn btn-sm" th:classappend="${selectedStatus == 'Maintenance'} ? 'btn-primary' : 'btn-outline'">
+                        Maintenance <span style="margin-left:4px; opacity:0.8;" th:text="'(' + ${maintenanceCount} + ')'">(0)</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Ward Pills Bar -->
+            <div style="margin-top:14px; pt-2; border-top:1px dashed var(--border); padding-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;"
+                 th:if="${!#lists.isEmpty(wards)}">
+                <span class="text-muted" style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">
+                    <i class='bx bx-buildings'></i> Ward:
+                </span>
+                <a th:href="@{/beds(status=${selectedStatus}, search=${search})}"
+                   class="badge" style="cursor:pointer; text-decoration:none; padding:6px 12px; border-radius:20px; font-size:12px;"
+                   th:styleappend="${selectedWardId == null} ? 'background:var(--primary); color:#fff;' : 'background:var(--bg-glass); color:var(--text-secondary); border:1px solid var(--border);'">
+                    All Wards
+                </a>
+                <a th:each="w : ${wards}"
+                   th:href="@{/beds(status=${selectedStatus}, wardId=${w.id}, search=${search})}"
+                   class="badge" style="cursor:pointer; text-decoration:none; padding:6px 12px; border-radius:20px; font-size:12px;"
+                   th:styleappend="${selectedWardId == w.id} ? 'background:var(--primary); color:#fff;' : 'background:var(--bg-glass); color:var(--text-secondary); border:1px solid var(--border);'"
+                   th:text="${w.wardName}">ICU Ward</a>
+            </div>
+        </div>
+
         <!-- Beds Table Card -->
         <div class="card">
             <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
-                <h2 style="font-size:1.1rem; margin:0;">
-                    <i class='bx bx-list-ul mr-1 text-primary'></i> Hospital Beds Overview
-                </h2>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-weight:700; font-size:1.05rem;">Hospital Inpatient Beds</span>
+                    <span class="badge badge-occupied" th:text="${#lists.size(beds)} + ' Beds'">0 Beds</span>
+                </div>
+                <div style="font-size:13px; color:var(--text-muted);">
+                    Occupied: <strong style="color:#ef4444;" th:text="${occupiedCount}">0</strong> / Available: <strong style="color:#10b981;" th:text="${availableCount}">0</strong>
+                </div>
             </div>
             <div class="card-body" style="padding:0;">
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
-                                <th>#</th>
+                                <th style="width:50px;">#</th>
                                 <th>Bed Number</th>
-                                <th>Ward</th>
+                                <th>Ward Location</th>
                                 <th>Floor</th>
                                 <th>Daily Rate (₹)</th>
-                                <th>Status</th>
+                                <th>Bed Status</th>
                                 <th>Assigned Patient</th>
                                 <th>Admission Date</th>
-                                <th>Actions</th>
+                                <th style="text-align:right;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr th:each="b, stat : ${beds}">
                                 <td th:text="${stat.index + 1}">1</td>
                                 <td>
-                                    <div style="font-weight:700; font-size:1.05rem;" th:text="${b.bedNumber}">B-101</div>
+                                    <div style="font-weight:700; font-size:1.05rem; color:var(--text-primary);" th:text="${b.bedNumber}">B-101</div>
                                 </td>
                                 <td>
                                     <span style="font-weight:600;" th:text="${b.ward.wardName}">ICU Ward</span>
@@ -97,7 +167,9 @@
                                 <td>
                                     <span th:text="'Floor ' + ${b.ward.floorNumber}">Floor 1</span>
                                 </td>
-                                <td style="font-weight:600;" th:text="${#numbers.formatDecimal(b.dailyRate, 1, 2)}">1500.00</td>
+                                <td>
+                                    <strong style="color:var(--text-primary);" th:text="'₹' + ${#numbers.formatDecimal(b.dailyRate, 1, 2)}">₹1,500.00</strong>
+                                </td>
                                 <td>
                                     <span th:if="${b.status == 'Available'}" class="badge badge-available">
                                         <i class='bx bx-check'></i> Available
@@ -111,28 +183,35 @@
                                 </td>
                                 <td>
                                     <div th:if="${b.patient != null}">
-                                        <a th:href="@{/patients/view/{id}(id=${b.patient.id})}" style="font-weight:600; color:var(--primary);" th:text="${b.patient.fullName}">John Doe</a>
-                                        <small class="text-muted" style="display:block;" th:text="${b.patient.patientId}">PID-1001</small>
+                                        <a th:href="@{/patients/view/{id}(id=${b.patient.id})}" style="font-weight:600; color:var(--primary); text-decoration:none;" th:text="${b.patient.fullName}">John Doe</a>
+                                        <div style="font-size:12px; color:var(--text-muted);" th:text="'PID: ' + ${b.patient.patientId}">PID-1001</div>
                                     </div>
-                                    <span th:if="${b.patient == null}" class="text-muted">—</span>
+                                    <span th:if="${b.patient == null}" class="text-muted" style="font-style:italic;">None (Vacant)</span>
                                 </td>
                                 <td>
-                                    <small class="text-muted" th:if="${b.admissionDate != null}" th:text="${#temporals.format(b.admissionDate, 'dd MMM yyyy, HH:mm')}">Date</small>
+                                    <div style="font-size:13px; font-weight:500;" th:if="${b.admissionDate != null}" th:text="${#temporals.format(b.admissionDate, 'dd MMM yyyy')}">Date</div>
+                                    <div style="font-size:11px; color:var(--text-muted);" th:if="${b.admissionDate != null}" th:text="${#temporals.format(b.admissionDate, 'HH:mm a')}">Time</div>
                                     <small class="text-muted" th:if="${b.admissionDate == null}">—</small>
                                 </td>
-                                <td>
+                                <td style="text-align:right;">
                                     <div class="btn-group">
-                                        <a th:if="${b.patient != null}" th:href="@{/beds/discharge/{id}(id=${b.id})}"
-                                           class="btn btn-sm btn-outline"
-                                           onclick="return confirm('Discharge patient from this bed?')"
-                                           title="Discharge Patient">
-                                            <i class='bx bx-log-out'></i> Discharge
+                                        <a th:if="${b.status == 'Available'}" th:href="@{/beds/edit/{id}(id=${b.id})}"
+                                           class="btn btn-sm btn-primary"
+                                           title="Admit / Assign Patient to Bed"
+                                           style="background:var(--success); border-color:var(--success); color:#fff;">
+                                            <i class='bx bx-user-plus'></i> Admit Patient
                                         </a>
-                                        <a th:href="@{/beds/edit/{id}(id=${b.id})}" class="btn btn-sm btn-primary" title="Edit Bed">
-                                            <i class='bx bx-edit'></i>
+                                        <a th:if="${b.patient != null}" th:href="@{/beds/discharge/{id}(id=${b.id})}"
+                                           class="btn btn-sm"
+                                           style="background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.25); font-weight:600;"
+                                           title="Inpatient Discharge &amp; Bed Billing Clearance">
+                                            <i class='bx bx-log-out'></i> Discharge &amp; Bill
+                                        </a>
+                                        <a th:href="@{/beds/edit/{id}(id=${b.id})}" class="btn btn-sm btn-outline" title="Edit Bed Settings">
+                                            <i class='bx bx-edit-alt'></i>
                                         </a>
                                         <a th:href="@{/beds/delete/{id}(id=${b.id})}" class="btn btn-sm btn-danger"
-                                           onclick="return confirm('Are you sure you want to delete this bed?')" title="Delete">
+                                           onclick="return confirm('Are you sure you want to delete this bed?')" title="Delete Bed">
                                             <i class='bx bx-trash'></i>
                                         </a>
                                     </div>
@@ -140,13 +219,18 @@
                             </tr>
                             <tr th:if="${#lists.isEmpty(beds)}">
                                 <td colspan="9">
-                                    <div class="empty-state">
-                                        <div class="empty-icon">🛏️</div>
-                                        <h3>No beds registered</h3>
-                                        <p class="text-muted">Start by configuring hospital wards and adding beds</p>
-                                        <a th:href="@{/beds/add}" class="btn btn-primary mt-2">
-                                            <i class='bx bx-plus'></i> Add Bed
-                                        </a>
+                                    <div class="empty-state" style="padding:48px 20px; text-align:center;">
+                                        <div class="empty-icon" style="font-size:42px; margin-bottom:12px;">🛏️</div>
+                                        <h3 style="margin-bottom:6px;">No beds found</h3>
+                                        <p class="text-muted" style="margin-bottom:16px;">There are no hospital beds matching the current filter criteria.</p>
+                                        <div style="display:flex; justify-content:center; gap:10px;">
+                                            <a th:href="@{/beds}" class="btn btn-outline" th:if="${selectedStatus != null or selectedWardId != null or search != null}">
+                                                <i class='bx bx-reset'></i> Clear Filters
+                                            </a>
+                                            <a th:href="@{/beds/add}" class="btn btn-primary">
+                                                <i class='bx bx-plus'></i> Add Bed
+                                            </a>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>

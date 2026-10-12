@@ -43,6 +43,22 @@ public class PharmacyService {
     }
 
     /**
+     * Increments inventory quantity for a medicine, with optional batch update.
+     */
+    public Medicine restock(Long id, int quantityToAdd, String newBatchNumber) {
+        if (quantityToAdd <= 0) {
+            throw new IllegalArgumentException("Restock quantity must be positive.");
+        }
+        Medicine medicine = findById(id);
+        int current = medicine.getStockQuantity() != null ? medicine.getStockQuantity() : 0;
+        medicine.setStockQuantity(current + quantityToAdd);
+        if (newBatchNumber != null && !newBatchNumber.trim().isEmpty()) {
+            medicine.setBatchNumber(newBatchNumber.trim());
+        }
+        return medicineRepo.save(medicine);
+    }
+
+    /**
      * Returns medicines whose stock is at or below their reorder level.
      */
     @Transactional(readOnly = true)

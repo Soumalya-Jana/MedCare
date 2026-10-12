@@ -39,30 +39,45 @@ public class PrescriptionController {
 
     @GetMapping
     public String listPrescriptions(
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) String status,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "status", required = false) String status,
             Model model) {
 
-        List<Prescription> prescriptions;
+        List<Prescription> allPrescriptions = prescriptionService.findAll();
+
+        long totalPrescriptions = allPrescriptions.size();
+        long pendingDispenseCount = prescriptionService.countPendingDispense();
+        long dispensedCount = allPrescriptions.stream()
+                .filter(p -> "Dispensed".equalsIgnoreCase(p.getStatus()))
+                .count();
+        long todaysPrescriptionsCount = allPrescriptions.stream()
+                .filter(p -> p.getPrescriptionDate() != null && p.getPrescriptionDate().equals(LocalDate.now()))
+                .count();
+
+        List<Prescription> filtered;
         if (search != null && !search.trim().isEmpty()) {
-            prescriptions = prescriptionService.search(search);
+            filtered = prescriptionService.search(search.trim());
         } else if (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status)) {
-            prescriptions = prescriptionService.findByStatus(status);
+            filtered = prescriptionService.findByStatus(status);
         } else {
-            prescriptions = prescriptionService.findAll();
+            filtered = allPrescriptions;
         }
 
-        model.addAttribute("prescriptions", prescriptions);
+        model.addAttribute("prescriptions", filtered);
         model.addAttribute("search", search);
         model.addAttribute("selectedStatus", status);
-        model.addAttribute("pendingDispenseCount", prescriptionService.countPendingDispense());
+        model.addAttribute("totalPrescriptions", totalPrescriptions);
+        model.addAttribute("pendingDispenseCount", pendingDispenseCount);
+        model.addAttribute("dispensedCount", dispensedCount);
+        model.addAttribute("todaysPrescriptionsCount", todaysPrescriptionsCount);
+
         return "prescriptions/list";
     }
 
     @GetMapping("/add")
     public String showAddForm(
-            @RequestParam(required = false) Long patientId,
-            @RequestParam(required = false) Long appointmentId,
+            @RequestParam(value = "patientId", required = false) Long patientId,
+            @RequestParam(value = "appointmentId", required = false) Long appointmentId,
             Principal principal,
             Model model) {
 
@@ -107,9 +122,9 @@ public class PrescriptionController {
     @PostMapping("/save")
     public String savePrescription(
             @ModelAttribute Prescription prescription,
-            @RequestParam Long patientId,
-            @RequestParam Long doctorId,
-            @RequestParam(required = false) Long appointmentId,
+            @RequestParam(value = "patientId") Long patientId,
+            @RequestParam(value = "doctorId") Long doctorId,
+            @RequestParam(value = "appointmentId", required = false) Long appointmentId,
             @RequestParam(name = "medName", required = false) List<String> medNames,
             @RequestParam(name = "medId", required = false) List<Long> medIds,
             @RequestParam(name = "dosage", required = false) List<String> dosages,
@@ -167,15 +182,15 @@ public class PrescriptionController {
         }
     }
 
-    @GetMapping("/view/{id}")
-    public String viewPrescription(@PathVariable Long id, Model model) {
+    @GetMapping({"/view/{id}", "/{id}"})
+    public String viewPrescription(@PathVariable("id") Long id, Model model) {
         Prescription prescription = prescriptionService.findById(id);
         model.addAttribute("prescription", prescription);
         return "prescriptions/view";
     }
 
     @PostMapping("/dispense/{id}")
-    public String dispensePrescription(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String dispensePrescription(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
         try {
             Prescription dispensed = prescriptionService.dispensePrescription(id);
             redirectAttributes.addFlashAttribute("success",
@@ -187,7 +202,7 @@ public class PrescriptionController {
     }
 
     @GetMapping("/delete/{id}")
-    public String deletePrescription(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String deletePrescription(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
         try {
             prescriptionService.deleteById(id);
             redirectAttributes.addFlashAttribute("success", "Prescription deleted successfully!");

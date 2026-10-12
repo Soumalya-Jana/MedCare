@@ -9,6 +9,7 @@ import java.util.List;
 @Repository
 public interface BillRepository extends JpaRepository<Bill, Long> {
     List<Bill> findByPatientId(Long patientId);
+    List<Bill> findByPatientIdOrderByCreatedAtDesc(Long patientId);
     List<Bill> findByStatus(String status);
     long countByStatus(String status);
 

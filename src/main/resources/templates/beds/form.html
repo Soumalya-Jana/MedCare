@@ -3,7 +3,7 @@
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
-        <div class="page-header">
+        <div class="page-header bed-hero">
             <div>
                 <h1 th:text="${bed.id != null ? 'Edit Bed Details' : 'Add New Bed'}">Add Bed</h1>
                 <p class="text-muted" style="margin-top:4px;">Assign bed identification, ward location, and inpatient occupancy</p>
@@ -71,7 +71,7 @@
                             <option th:each="p : ${patients}"
                                     th:value="${p.id}"
                                     th:text="${p.fullName} + ' (' + ${p.patientId} + ') - Age ' + ${p.age}"
-                                    th:selected="${bed.patient != null && bed.patient.id == p.id}">
+                                    th:selected="${(bed.patient != null && bed.patient.id == p.id) || (selectedPatientId != null && selectedPatientId == p.id)}">
                                 Jane Doe (PID-1002) - Age 28
                             </option>
                         </select>

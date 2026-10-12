@@ -3,7 +3,7 @@
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
-        <div class="page-header">
+        <div class="page-header pharmacy-hero">
             <h1><i class='bx bxs-capsule mr-1'></i> <span th:text="${medicine.id != null} ? 'Edit Medicine' : 'Add Medicine'">New Medicine</span></h1>
             <div class="page-actions"><a th:href="@{/pharmacy}" class="btn btn-outline"><i class='bx bx-arrow-back'></i> Back</a></div>
         </div>

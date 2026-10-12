@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle ?: 'Front Desk Portal | MedCare'}">Front Desk Portal | MedCare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('hms-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body class="auth-page role-receptionist">
+
+    <!-- Ambient glow -->
+    <div class="auth-ambient-glow" aria-hidden="true"></div>
+
+    <!-- Theme Switcher Top-Right -->
+    <div style="position:fixed; top:20px; right:24px; z-index:100;">
+        <button type="button" class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" title="Switch Light/Dark Theme">
+            <div class="toggle-track">
+                <i class='bx bxs-sun icon-sun'></i>
+                <i class='bx bxs-moon icon-moon'></i>
+                <span class="toggle-thumb"></span>
+            </div>
+        </button>
+    </div>
+
+    <div class="auth-card role-receptionist">
+        <!-- Role Switcher Tabs -->
+        <div class="auth-role-switcher">
+            <a th:href="@{/login/admin}" class="auth-role-tab tab-admin">
+                <i class='bx bxs-shield-quarter'></i> Admin
+            </a>
+            <a th:href="@{/login/doctor}" class="auth-role-tab tab-doctor">
+                <i class='bx bx-plus-medical'></i> Doctor
+            </a>
+            <a th:href="@{/login/receptionist}" class="auth-role-tab active tab-receptionist">
+                <i class='bx bxs-id-card'></i> Reception
+            </a>
+        </div>
+
+        <div class="auth-header">
+            <div class="auth-icon-wrap">
+                <i class='bx bxs-id-card'></i>
+            </div>
+            <div class="auth-role-badge">
+                <i class='bx bx-user-check'></i> Front Desk Operations
+            </div>
+            <h1>Receptionist Portal</h1>
+            <p>Patient Check-in, OPD Bookings, Bed Assignment &amp; Billing</p>
+        </div>
+
+        <!-- Success Flash / Registration Success -->
+        <div th:if="${success}" class="alert alert-success">
+            <i class='bx bx-check-circle'></i>
+            <span th:text="${success}">Front desk account ready.</span>
+        </div>
+        <div th:if="${param.registered}" class="alert alert-success">
+            <i class='bx bx-check-circle'></i>
+            Reception staff account registered successfully! Please sign in.
+        </div>
+
+        <!-- Role Mismatch Error -->
+        <div th:if="${param.roleMismatch}" class="alert alert-danger">
+            <i class='bx bx-shield-x'></i>
+            <strong>Access Denied:</strong> This portal is for Reception &amp; Front Desk staff. Please use the Admin or Doctor portal.
+        </div>
+
+        <!-- General Error Message -->
+        <div th:if="${param.error}" class="alert alert-danger">
+            <i class='bx bx-error-circle'></i>
+            Invalid receptionist username or password. Please try again.
+        </div>
+
+        <!-- Logout Message -->
+        <div th:if="${param.logout}" class="alert alert-success">
+            <i class='bx bx-check-circle'></i>
+            Front desk session concluded securely.
+        </div>
+
+        <form th:action="@{/login}" method="post">
+            <input type="hidden" name="portalRole" value="RECEPTIONIST">
+
+            <div class="auth-input-group">
+                <label for="username">Receptionist Username</label>
+                <div class="auth-input-wrapper">
+                    <input type="text" id="username" name="username" class="form-control"
+                           placeholder="Enter username (e.g. reception)" required autofocus>
+                    <i class='bx bx-user auth-input-icon'></i>
+                </div>
+            </div>
+
+            <div class="auth-input-group">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <label for="password" style="margin:0;">Password</label>
+                    <span style="font-size:11px; color:var(--text-muted);">Front desk credential</span>
+                </div>
+                <div class="auth-input-wrapper">
+                    <input type="password" id="password" name="password" class="form-control"
+                           placeholder="Enter front desk password" required>
+                    <i class='bx bx-lock-alt auth-input-icon'></i>
+                </div>
+            </div>
+
+            <button type="submit" class="auth-submit-btn">
+                <i class='bx bx-log-in'></i>
+                Sign In to Reception Desk
+            </button>
+        </form>
+
+        <div class="auth-demo-box">
+            <p class="text-muted" style="font-size:12px; margin-bottom:10px; font-weight:600;">
+                Quick Reception Demo Access:
+            </p>
+            <button type="button" class="btn btn-sm btn-outline w-100" onclick="fillReceptionCredentials()">
+                <i class='bx bxs-user-detail text-purple'></i> Autofill Reception Desk (<code>reception</code> / <code>reception123</code>)
+            </button>
+        </div>
+
+        <div class="auth-footer-links">
+            <a th:href="@{/register/receptionist}" style="font-weight:600; color:#7c3aed;">
+                <i class='bx bx-user-plus'></i> Register Reception Staff
+            </a>
+            <a th:href="@{/login}" style="color:var(--text-muted);">
+                <i class='bx bx-grid-alt'></i> All Portals
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function fillReceptionCredentials() {
+            document.getElementById('username').value = 'reception';
+            document.getElementById('password').value = 'reception123';
+        }
+    </script>
+    <script th:src="@{/js/theme.js}"></script>
+</body>
+</html>

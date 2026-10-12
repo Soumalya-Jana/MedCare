@@ -48,13 +48,51 @@
                     </div>
                 </div>
             </div>
-            <div style="display:flex; gap:10px;">
-                <a th:href="@{/prescriptions/add}" class="btn btn-primary" style="background:#6366f1; border-color:#6366f1;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <a th:href="@{/emergency}" class="btn btn-danger">
+                    <i class='bx bxs-ambulance'></i> Emergency (<span th:text="${activeEmergencyCases != null ? activeEmergencyCases : 0}">0</span>)
+                </a>
+                <a th:href="@{/appointments/add}" class="btn btn-outline">
+                    <i class='bx bx-calendar-plus'></i> New Booking
+                </a>
+                <a th:href="@{/prescriptions/add}" class="btn btn-outline">
                     <i class='bx bx-notepad'></i> Write Rx
                 </a>
                 <a th:href="@{/patients/add}" class="btn btn-primary">
                     <i class='bx bx-user-plus'></i> New Patient
                 </a>
+            </div>
+        </div>
+
+        <!-- Emergency Department Clinical Alert Ribbon -->
+        <div th:if="${activeEmergencyCases != null and activeEmergencyCases > 0}" 
+             class="card mb-4" 
+             style="border-left: 4px solid var(--danger); padding: 14px 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:36px; height:36px; border-radius:var(--radius-md); background:var(--danger-light); color:var(--danger); display:flex; align-items:center; justify-content:center; font-size:18px;">
+                        <i class='bx bxs-ambulance'></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700; font-size:13.5px; color:var(--text-primary); display:flex; align-items:center; gap:8px;">
+                            <span>Emergency Department Alert</span>
+                            <span class="badge badge-code-red" th:if="${codeRedCases != null and codeRedCases > 0}">
+                                <span th:text="${codeRedCases}">0</span> Critical
+                            </span>
+                        </div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                            Currently <strong th:text="${activeEmergencyCases}">0</strong> patients in active triage.
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <a th:href="@{/emergency/intake}" class="btn btn-sm btn-danger">
+                        <i class='bx bx-plus-medical'></i> New Intake
+                    </a>
+                    <a th:href="@{/emergency}" class="btn btn-sm btn-outline">
+                        View ED Queue &rarr;
+                    </a>
+                </div>
             </div>
         </div>
 

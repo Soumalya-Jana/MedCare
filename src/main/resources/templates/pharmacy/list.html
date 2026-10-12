@@ -1,64 +1,329 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head}"></head>
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
-        <div class="page-header">
-            <h1><i class='bx bxs-capsule mr-1'></i> Pharmacy</h1>
-            <div class="page-actions">
-                <a th:href="@{/prescriptions(status='Active')}" class="btn btn-outline"><i class='bx bx-notepad'></i> Pending Rx to Dispense</a>
-                <a th:href="@{/pharmacy/add}" class="btn btn-primary"><i class='bx bx-plus'></i> Add Medicine</a>
+        <!-- Page Header -->
+        <div class="page-header pharmacy-hero">
+            <div>
+                <h1><i class='bx bxs-capsule mr-1'></i> Pharmacy &amp; Formulary Inventory</h1>
+                <p class="text-muted" style="margin-top:4px;">Real-time medication stock management, reorder alerts, and pharmaceutical inventory valuation</p>
+            </div>
+            <div class="page-actions" style="display:flex; gap:10px;">
+                <a th:href="@{/prescriptions(status='Active')}" class="btn btn-outline">
+                    <i class='bx bx-notepad'></i> Dispense Queue
+                </a>
+                <a th:href="@{/pharmacy/add}" class="btn btn-primary">
+                    <i class='bx bx-plus'></i> Add Medicine
+                </a>
             </div>
         </div>
 
-        <!-- Low Stock Alert -->
-        <div th:if="${!#lists.isEmpty(lowStockMedicines)}" class="alert alert-warning">
-            <i class='bx bx-error'></i>
-            <span th:text="${#lists.size(lowStockMedicines)} + ' medicines are running low on stock!'">Low stock alert</span>
+        <!-- Feedback Alerts -->
+        <div th:if="${success}" class="alert alert-success">
+            <i class='bx bx-check-circle'></i>
+            <span th:text="${success}">Inventory operation completed successfully!</span>
         </div>
 
-        <div class="search-bar">
-            <form th:action="@{/pharmacy}" method="get" class="search-input-wrapper">
-                <span class="search-icon"><i class='bx bx-search'></i></span>
-                <input type="text" name="search" th:value="${search}" placeholder="Search medicines..." class="form-control" style="padding-left:42px;">
-            </form>
+        <!-- Critical Low Stock Alert Banner -->
+        <div th:if="${lowStockCount > 0 or outOfStockCount > 0}" class="alert alert-warning" style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <i class='bx bx-error-circle' style="font-size:20px;"></i>
+                <div>
+                    <strong>Inventory Alert:</strong>
+                    <span th:if="${outOfStockCount > 0}" th:text="${outOfStockCount} + ' item(s) currently out of stock.'">1 item out of stock.</span>
+                    <span th:if="${lowStockCount > 0}" th:text="${lowStockCount} + ' medicine(s) are at or below reorder threshold.'">2 items low.</span>
+                </div>
+            </div>
+            <a th:href="@{/pharmacy(stockFilter='LOW')}" class="btn btn-sm" style="background:#f59e0b; color:#fff; border:none;">
+                <i class='bx bx-show'></i> Review Low Stock
+            </a>
         </div>
 
+        <!-- Inventory KPI Metric Cards -->
+        <div class="stats-grid mb-4">
+            <div class="stat-card blue">
+                <div class="stat-icon" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">
+                    <i class='bx bxs-capsule'></i>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-value" th:text="${totalMedicines}">0</div>
+                    <div class="stat-label">Total Drug Formulations</div>
+                </div>
+            </div>
+
+            <div class="stat-card orange">
+                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+                    <i class='bx bx-error'></i>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-value" th:text="${lowStockCount}">0</div>
+                    <div class="stat-label">Low Stock Warnings</div>
+                </div>
+            </div>
+
+            <div class="stat-card red">
+                <div class="stat-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                    <i class='bx bx-block'></i>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-value" th:text="${outOfStockCount}">0</div>
+                    <div class="stat-label">Depleted / Out of Stock</div>
+                </div>
+            </div>
+
+            <div class="stat-card green">
+                <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+                    <i class='bx bx-dollar-circle'></i>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-value" th:text="'₹' + ${#numbers.formatDecimal(totalInventoryValue, 0, 0)}">₹0</div>
+                    <div class="stat-label">Total Inventory Valuation</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter Control Bar -->
+        <div class="card mb-4" style="padding: 16px 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                <!-- Search Form -->
+                <form th:action="@{/pharmacy}" method="get" style="display:flex; gap:12px; flex:1; max-width:480px;">
+                    <input type="hidden" name="category" th:if="${selectedCategory != null}" th:value="${selectedCategory}"/>
+                    <input type="hidden" name="stockFilter" th:if="${selectedStockFilter != null}" th:value="${selectedStockFilter}"/>
+                    <div class="search-input-wrapper" style="flex:1;">
+                        <span class="search-icon"><i class='bx bx-search'></i></span>
+                        <input type="text" name="search" th:value="${search}" placeholder="Search drug name, generic, manufacturer, batch..." class="form-control" style="padding-left:42px;">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class='bx bx-filter-alt'></i> Search</button>
+                    <a th:if="${search != null or selectedCategory != null or selectedStockFilter != null}" th:href="@{/pharmacy}" class="btn btn-outline" title="Reset Filters">
+                        <i class='bx bx-reset'></i> Reset
+                    </a>
+                </form>
+
+                <!-- Stock Health Tabs -->
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <span class="text-muted" style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Stock Level:</span>
+                    <a th:href="@{/pharmacy(category=${selectedCategory}, search=${search})}" 
+                       class="btn btn-sm" th:classappend="${selectedStockFilter == null or selectedStockFilter == 'ALL'} ? 'btn-primary' : 'btn-outline'">
+                        All <span style="margin-left:4px; opacity:0.8;" th:text="'(' + ${totalMedicines} + ')'">(0)</span>
+                    </a>
+                    <a th:href="@{/pharmacy(stockFilter='NORMAL', category=${selectedCategory}, search=${search})}" 
+                       class="btn btn-sm" th:classappend="${selectedStockFilter == 'NORMAL'} ? 'btn-primary' : 'btn-outline'">
+                        In Stock <span style="margin-left:4px; opacity:0.8;" th:text="'(' + ${inStockCount} + ')'">(0)</span>
+                    </a>
+                    <a th:href="@{/pharmacy(stockFilter='LOW', category=${selectedCategory}, search=${search})}" 
+                       class="btn btn-sm" th:classappend="${selectedStockFilter == 'LOW'} ? 'btn-primary' : 'btn-outline'">
+                        Low Stock <span style="margin-left:4px; opacity:0.8;" th:text="'(' + ${lowStockCount} + ')'">(0)</span>
+                    </a>
+                    <a th:href="@{/pharmacy(stockFilter='OUT', category=${selectedCategory}, search=${search})}" 
+                       class="btn btn-sm" th:classappend="${selectedStockFilter == 'OUT'} ? 'btn-primary' : 'btn-outline'">
+                        Out of Stock <span style="margin-left:4px; opacity:0.8;" th:text="'(' + ${outOfStockCount} + ')'">(0)</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Category Pills Bar -->
+            <div style="margin-top:14px; pt-2; border-top:1px dashed var(--border); padding-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <span class="text-muted" style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">
+                    <i class='bx bx-category'></i> Category:
+                </span>
+                <a th:href="@{/pharmacy(stockFilter=${selectedStockFilter}, search=${search})}"
+                   class="badge" style="cursor:pointer; text-decoration:none; padding:6px 12px; border-radius:20px; font-size:12px;"
+                   th:styleappend="${selectedCategory == null} ? 'background:var(--primary); color:#fff;' : 'background:var(--bg-glass); color:var(--text-secondary); border:1px solid var(--border);'">
+                    All Formulations
+                </a>
+                <a th:each="cat : ${categories}"
+                   th:href="@{/pharmacy(stockFilter=${selectedStockFilter}, category=${cat}, search=${search})}"
+                   class="badge" style="cursor:pointer; text-decoration:none; padding:6px 12px; border-radius:20px; font-size:12px;"
+                   th:styleappend="${selectedCategory == cat} ? 'background:var(--primary); color:#fff;' : 'background:var(--bg-glass); color:var(--text-secondary); border:1px solid var(--border);'"
+                   th:text="${cat}">Tablet</a>
+            </div>
+        </div>
+
+        <!-- Inventory Registry Table Card -->
         <div class="card">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-weight:700; font-size:1.05rem;">Pharmaceutical Inventory Catalog</span>
+                    <span class="badge badge-occupied" th:text="${#lists.size(medicines)} + ' Items'">0 Items</span>
+                </div>
+                <div style="font-size:13px; color:var(--text-muted);">
+                    Total Physical Units: <strong style="color:var(--text-primary);" th:text="${totalUnitsInStock} + ' Units'">0 Units</strong>
+                </div>
+            </div>
             <div class="card-body" style="padding:0;">
                 <div class="table-container">
                     <table>
-                        <thead><tr><th>#</th><th>Name</th><th>Category</th><th>Manufacturer</th><th>Price (₹)</th><th>Stock</th><th>Reorder Level</th><th>Actions</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th style="width:60px;">#</th>
+                                <th>Medicine Name &amp; Generic</th>
+                                <th>Category</th>
+                                <th>Manufacturer &amp; Batch</th>
+                                <th>Unit Price (₹)</th>
+                                <th>Stock Status</th>
+                                <th>Reorder Level</th>
+                                <th>Valuation (₹)</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            <tr th:each="med, stat : ${medicines}" th:classappend="${med.stockQuantity <= med.reorderLevel} ? 'low-stock' : ''">
+                            <tr th:each="med, stat : ${medicines}">
                                 <td th:text="${stat.index + 1}">1</td>
                                 <td>
-                                    <div th:text="${med.name}">Medicine</div>
-                                    <small class="text-muted" th:text="${med.genericName}">Generic</small>
+                                    <div style="font-weight:700; color:var(--text-primary); font-size:14px;" th:text="${med.name}">Paracetamol 500mg</div>
+                                    <div style="font-size:12px; color:var(--text-muted);" th:text="${med.genericName != null and !#strings.isEmpty(med.genericName) ? med.genericName : '—'}">Acetaminophen</div>
                                 </td>
-                                <td><span class="badge badge-occupied" th:text="${med.category}">Tablet</span></td>
-                                <td th:text="${med.manufacturer}">Manufacturer</td>
-                                <td th:text="${med.price}">0</td>
                                 <td>
-                                    <span th:classappend="${med.stockQuantity <= med.reorderLevel} ? 'text-red' : 'text-green'" th:text="${med.stockQuantity}">0</span>
-                                    <span th:if="${med.stockQuantity <= med.reorderLevel}" style="font-size:10px;" class="text-red"> ⚠ LOW</span>
+                                    <span class="badge badge-occupied" th:text="${med.category}">Tablet</span>
                                 </td>
-                                <td th:text="${med.reorderLevel}">50</td>
                                 <td>
+                                    <div style="font-weight:500;" th:text="${med.manufacturer != null and !#strings.isEmpty(med.manufacturer) ? med.manufacturer : '—'}">Cipla Ltd</div>
+                                    <small class="text-muted" th:if="${med.batchNumber != null}" th:text="'Batch: ' + ${med.batchNumber}">Batch: B102</small>
+                                </td>
+                                <td>
+                                    <strong style="color:var(--text-primary);" th:text="'₹' + ${#numbers.formatDecimal(med.price != null ? med.price : 0.0, 1, 2)}">₹20.00</strong>
+                                </td>
+                                <td>
+                                    <!-- Out of stock badge -->
+                                    <span th:if="${med.stockQuantity == null or med.stockQuantity <= 0}" class="badge" style="background:rgba(239, 68, 68, 0.15); color:#ef4444; font-weight:700;">
+                                        <i class='bx bx-block'></i> 0 (Out of Stock)
+                                    </span>
+                                    <!-- Low stock badge -->
+                                    <span th:if="${med.stockQuantity != null and med.stockQuantity > 0 and med.stockQuantity <= med.reorderLevel}" class="badge" style="background:rgba(245, 158, 11, 0.15); color:#f59e0b; font-weight:700;">
+                                        <i class='bx bx-error'></i> <span th:text="${med.stockQuantity} + ' Units'">15 Units</span> (Low)
+                                    </span>
+                                    <!-- Adequate stock badge -->
+                                    <span th:if="${med.stockQuantity != null and med.stockQuantity > med.reorderLevel}" class="badge badge-available">
+                                        <i class='bx bx-check-circle'></i> <span th:text="${med.stockQuantity} + ' Units'">150 Units</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="text-muted" th:text="${med.reorderLevel} + ' units'">50 units</span>
+                                </td>
+                                <td>
+                                    <span style="font-weight:600; color:var(--text-primary);"
+                                          th:text="'₹' + ${#numbers.formatDecimal((med.price != null ? med.price : 0.0) * (med.stockQuantity != null ? med.stockQuantity : 0), 1, 2)}">
+                                        ₹3,000.00
+                                    </span>
+                                </td>
+                                <td style="text-align:right;">
                                     <div class="btn-group">
-                                        <a th:href="@{/pharmacy/edit/{id}(id=${med.id})}" class="btn btn-sm btn-primary"><i class='bx bx-edit'></i></a>
-                                        <a th:href="@{/pharmacy/delete/{id}(id=${med.id})}" class="btn btn-sm btn-danger" onclick="return confirm('Delete?')"><i class='bx bx-trash'></i></a>
+                                        <button type="button" class="btn btn-sm btn-outline" style="color:var(--success); border-color:rgba(16,185,129,0.3);"
+                                                th:attr="onclick=|openRestockModal(${med.id}, '${#strings.escapeJavaScript(med.name)}', ${med.stockQuantity ?: 0}, ${med.reorderLevel ?: 0}, '${#strings.escapeJavaScript(med.batchNumber ?: '')}')|"
+                                                title="Quick Restock Stock">
+                                            <i class='bx bx-plus-circle'></i> Restock
+                                        </button>
+                                        <a th:href="@{/pharmacy/edit/{id}(id=${med.id})}" class="btn btn-sm btn-primary" title="Edit Inventory &amp; Stock Levels">
+                                            <i class='bx bx-edit-alt'></i>
+                                        </a>
+                                        <a th:href="@{/pharmacy/delete/{id}(id=${med.id})}" class="btn btn-sm btn-danger" onclick="return confirm('Remove this medicine from pharmacy formulary?')" title="Delete Drug">
+                                            <i class='bx bx-trash'></i>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(medicines)}">
-                                <td colspan="8"><div class="empty-state"><div class="empty-icon">💊</div><h3>No medicines found</h3></div></td>
+                                <td colspan="9">
+                                    <div class="empty-state" style="padding:48px 20px; text-align:center;">
+                                        <div class="empty-icon" style="font-size:42px; margin-bottom:12px;">💊</div>
+                                        <h3 style="margin-bottom:6px;">No medicines found in inventory</h3>
+                                        <p class="text-muted" style="margin-bottom:16px;">There are no medications matching the current filter criteria.</p>
+                                        <div style="display:flex; justify-content:center; gap:10px;">
+                                            <a th:href="@{/pharmacy}" class="btn btn-outline" th:if="${selectedCategory != null or selectedStockFilter != null or search != null}">
+                                                <i class='bx bx-reset'></i> Clear Filters
+                                            </a>
+                                            <a th:href="@{/pharmacy/add}" class="btn btn-primary">
+                                                <i class='bx bx-plus'></i> Add Medicine
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
+
+        <!-- Quick Restock Modal Dialog -->
+        <div id="restockModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(6px); z-index:9999; justify-content:center; align-items:center;">
+            <div class="card" style="width:100%; max-width:480px; margin:20px; box-shadow:0 20px 40px rgba(0,0,0,0.5); border:1px solid var(--border);">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:22px;">📦</span>
+                        <h3 style="margin:0; font-size:1.1rem; color:var(--text-primary);">Quick Stock Inward &amp; Restock</h3>
+                    </div>
+                    <button type="button" onclick="closeRestockModal()" style="background:transparent; border:none; color:var(--text-muted); font-size:22px; cursor:pointer;">&times;</button>
+                </div>
+                <div class="card-body">
+                    <form id="restockForm" method="post" action="">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        
+                        <div style="background:var(--bg-glass); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:18px;">
+                            <div style="font-size:11px; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Medication</div>
+                            <div id="modalMedName" style="font-size:1.1rem; font-weight:700; color:var(--text-primary); margin-top:2px;">Paracetamol</div>
+                            <div style="display:flex; gap:16px; margin-top:8px; font-size:13px;">
+                                <div>Current Stock: <strong id="modalCurrentStock" style="color:var(--text-primary);">0</strong> units</div>
+                                <div>Reorder Level: <strong id="modalReorderLevel" style="color:var(--text-muted);">0</strong> units</div>
+                            </div>
+                        </div>
+
+                        <!-- Preset Increment Buttons -->
+                        <div class="form-group">
+                            <label class="form-label" style="font-size:12px; text-transform:uppercase; color:var(--text-muted);">Quick Add Presets:</label>
+                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                <button type="button" class="btn btn-sm btn-outline" onclick="addQuickQty(10)">+10</button>
+                                <button type="button" class="btn btn-sm btn-outline" onclick="addQuickQty(25)">+25</button>
+                                <button type="button" class="btn btn-sm btn-outline" onclick="addQuickQty(50)">+50</button>
+                                <button type="button" class="btn btn-sm btn-outline" onclick="addQuickQty(100)">+100</button>
+                                <button type="button" class="btn btn-sm btn-outline" onclick="addQuickQty(500)">+500</button>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group" style="flex:1;">
+                                <label class="form-label" for="restockQuantity">Inward Quantity <span class="text-red">*</span></label>
+                                <input type="number" id="restockQuantity" name="quantity" min="1" class="form-control" placeholder="e.g. 50" required>
+                            </div>
+                            <div class="form-group" style="flex:1;">
+                                <label class="form-label" for="restockBatchNumber">Batch / Lot # (optional)</label>
+                                <input type="text" id="restockBatchNumber" name="batchNumber" class="form-control" placeholder="e.g. B-2026-99">
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                            <button type="button" onclick="closeRestockModal()" class="btn btn-outline">Cancel</button>
+                            <button type="submit" class="btn btn-primary" style="background:var(--success); border-color:var(--success);">
+                                <i class='bx bx-check-circle'></i> Confirm Restock
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function openRestockModal(id, name, currentStock, reorderLevel, batchNumber) {
+                document.getElementById('restockForm').action = '/pharmacy/restock/' + id;
+                document.getElementById('modalMedName').innerText = name;
+                document.getElementById('modalCurrentStock').innerText = currentStock;
+                document.getElementById('modalReorderLevel').innerText = reorderLevel;
+                document.getElementById('restockBatchNumber').value = batchNumber || '';
+                document.getElementById('restockQuantity').value = 50;
+                var modal = document.getElementById('restockModal');
+                modal.style.display = 'flex';
+            }
+            function closeRestockModal() {
+                document.getElementById('restockModal').style.display = 'none';
+            }
+            function addQuickQty(amt) {
+                var input = document.getElementById('restockQuantity');
+                var cur = parseInt(input.value) || 0;
+                input.value = cur + amt;
+            }
+        </script>
     </div>
 </div>
 </body>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:replace="~{layout :: layout(~{::content})}">
+    <div th:fragment="content">
+
+        <!-- Page Header -->
+        <div class="page-header bed-hero">
+            <div>
+                <h1><i class='bx bxs-user-check mr-1 text-primary'></i> Inpatient Discharge &amp; Clearance</h1>
+                <p class="text-muted" style="margin-top:4px;">Review inpatient hospitalization duration, clinical summary, and automated bed billing</p>
+            </div>
+            <div class="page-actions">
+                <a th:href="@{/beds}" class="btn btn-outline">
+                    <i class='bx bx-arrow-back'></i> Back to Beds
+                </a>
+            </div>
+        </div>
+
+        <form th:action="@{/beds/discharge/{id}(id=${bed.id})}" method="post" style="max-width: 1000px; margin: 0 auto;">
+            
+            <!-- Inpatient & Ward Overview Card -->
+            <div class="role-hero-card" style="margin-bottom:24px;">
+                <div class="role-hero-content">
+                    <div class="role-hero-avatar" style="background:var(--gradient-primary); font-size:1.8rem; font-weight:800; color:#fff;">
+                        <span th:text="${#strings.substring(patient.fullName, 0, 1).toUpperCase()}">P</span>
+                    </div>
+                    <div class="role-hero-info">
+                        <h2>
+                            <span th:text="${patient.fullName}">Patient Name</span>
+                            <span class="badge badge-occupied" th:text="${bed.bedNumber}">ICU-01</span>
+                            <span class="badge badge-maintenance" th:text="${bed.ward.wardName} + ' (' + ${bed.ward.wardType} + ' - Floor ' + ${bed.ward.floorNumber} + ')'">General Ward</span>
+                        </h2>
+                        <p class="text-secondary" style="font-size:14px; margin:0;">
+                            <span th:text="${patient.gender}">Gender</span> &bull; 
+                            <span th:text="${patient.age} + ' Yrs'">32 Yrs</span> &bull; 
+                            <span th:text="'ID: ' + ${patient.patientId}">PID-1001</span> &bull;
+                            <span th:text="'Blood: ' + ${(patient.bloodGroup ?: 'Not Recorded')}">O+</span>
+                        </p>
+                        <div class="role-hero-meta">
+                            <span class="hero-pill">
+                                <i class='bx bx-phone'></i>
+                                <span th:text="${patient.phone ?: 'No Phone Recorded'}">+91 98765 43210</span>
+                            </span>
+                            <span class="hero-pill" th:if="${patient.allergies != null and !#strings.isEmpty(patient.allergies)}">
+                                <i class='bx bxs-error-circle text-red'></i>
+                                <span th:text="'Allergies: ' + ${patient.allergies}">Penicillin</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Room Charges Summary Banner -->
+            <div class="card mb-4" style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(99, 102, 241, 0.08) 100%); border: 1.5px solid var(--primary-border);">
+                <div class="card-body" style="padding: 24px 28px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;">
+                        <div>
+                            <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); font-weight:700;">Hospital Stay Duration</div>
+                            <div style="display:flex; align-items:center; gap:16px; margin-top:8px;">
+                                <div>
+                                    <div style="font-size:12px; color:var(--text-secondary);">Admitted:</div>
+                                    <strong style="font-size:14px; color:var(--text-primary);" th:text="${#temporals.format(admissionDate, 'dd MMM yyyy, hh:mm a')}">01 Oct 2026, 10:00 AM</strong>
+                                </div>
+                                <div style="color:var(--text-muted); font-size:18px;">&rarr;</div>
+                                <div>
+                                    <div style="font-size:12px; color:var(--text-secondary);">Discharge:</div>
+                                    <strong style="font-size:14px; color:var(--text-primary);" th:text="${#temporals.format(dischargeDate, 'dd MMM yyyy, hh:mm a')}">05 Oct 2026, 03:00 PM</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; gap:24px; align-items:center;">
+                            <div style="text-align:right;">
+                                <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); font-weight:700;">Stay Count</div>
+                                <div style="font-size:1.6rem; font-weight:800; color:var(--primary); margin-top:2px;">
+                                    <span th:text="${daysStayed}">1</span> <span style="font-size:14px; font-weight:600; color:var(--text-secondary);">Day(s)</span>
+                                </div>
+                                <div style="font-size:12px; color:var(--text-muted);" th:text="'@ ₹' + ${#numbers.formatDecimal(dailyRate, 1, 2)} + ' / day'">@ ₹1,500.00 / day</div>
+                            </div>
+
+                            <div style="height:48px; width:1px; background:var(--border-color);"></div>
+
+                            <div style="text-align:right;">
+                                <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); font-weight:700;">Accrued Room Total</div>
+                                <div style="font-size:1.8rem; font-weight:800; color:var(--success); margin-top:2px;">
+                                    ₹<span th:text="${#numbers.formatDecimal(estimatedRoomCharges, 1, 2)}">1,500.00</span>
+                                </div>
+                                <div style="font-size:11px; color:var(--text-muted);">Auto-itemized to bill</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two Column Card Layout: Clinical Clearance & Financial Options -->
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap:24px; margin-bottom:24px;">
+                
+                <!-- Clinical Discharge Notes Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 style="font-size:1.1rem; margin:0;">
+                            <i class='bx bxs-file-doc mr-1 text-primary'></i> Clinical Discharge Summary
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label class="form-label" for="dischargeCondition">Condition at Discharge <span class="text-red">*</span></label>
+                            <select id="dischargeCondition" name="dischargeCondition" class="form-control" required>
+                                <option value="Recovered / Stable" selected>Recovered &amp; Stable (Discharged Home)</option>
+                                <option value="Improved">Clinically Improved (Outpatient Follow-up)</option>
+                                <option value="Referred / Transferred">Referred / Transferred to Higher Facility</option>
+                                <option value="Discharged on Request">Discharged on Request of Patient/Family</option>
+                                <option value="LAMA (Left Against Medical Advice)">Left Against Medical Advice (LAMA)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label class="form-label" for="attendingDoctorSelect">Attending Physician / RMO</label>
+                            <select id="attendingDoctorSelect" name="attendingDoctorName" class="form-control">
+                                <option value="Duty Medical Officer">-- Select Attending Physician --</option>
+                                <option th:each="doc : ${doctors}"
+                                        th:value="'Dr. ' + ${doc.fullName} + ' (' + ${doc.specialization} + ')'"
+                                        th:text="'Dr. ' + ${doc.fullName} + ' (' + ${doc.specialization} + ')'">
+                                    Dr. Sharma (Cardiology)
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label class="form-label" for="dischargeNotes">Clinical Summary &amp; Treatment Given</label>
+                            <textarea id="dischargeNotes" name="dischargeNotes" rows="3" class="form-control"
+                                      placeholder="Brief summary of inpatient course, surgical or medical interventions, response to therapy..."></textarea>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label class="form-label" for="followUpAdvice">Discharge Instructions &amp; Follow-up Advice</label>
+                            <textarea id="followUpAdvice" name="followUpAdvice" rows="2" class="form-control"
+                                      placeholder="Medications to continue, wound care, diet advice, follow-up visit date (e.g. review in OPD after 7 days)..."></textarea>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Billing & Invoice Generation Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 style="font-size:1.1rem; margin:0;">
+                            <i class='bx bxs-receipt mr-1 text-primary'></i> Automated Bed Billing Integration
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        
+                        <!-- Toggle to auto-generate bill -->
+                        <div class="form-group" style="margin-bottom:18px; padding:12px; background:var(--bg-body); border-radius:8px; border:1px solid var(--border-color);">
+                            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:0; font-weight:600;">
+                                <input type="checkbox" id="generateBill" name="generateBill" value="true" checked style="width:18px; height:18px; accent-color:var(--primary);">
+                                <span>Generate Official Inpatient Invoice for Room Charges</span>
+                            </label>
+                            <small class="text-muted" style="display:block; margin-top:6px; margin-left:28px;">
+                                Automatically creates a Bill record with itemized room charges (₹<span th:text="${#numbers.formatDecimal(estimatedRoomCharges, 1, 2)}">1,500.00</span>) linked to patient account.
+                            </small>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group" style="margin-bottom:16px;">
+                                <label class="form-label" for="discount">Special Discount / Waiver (₹)</label>
+                                <input type="number" step="0.01" id="discount" name="discount" value="0.0" min="0" class="form-control" placeholder="0.00">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom:16px;">
+                                <label class="form-label" for="paymentMethod">Payment Method</label>
+                                <select id="paymentMethod" name="paymentMethod" class="form-control">
+                                    <option value="Cash" selected>Cash</option>
+                                    <option value="UPI">UPI (Google Pay / PhonePe / Paytm)</option>
+                                    <option value="Card">Credit / Debit Card</option>
+                                    <option value="Insurance">Health Insurance / TPA</option>
+                                    <option value="Net Banking">Net Banking</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Mark Paid Immediately Checkbox -->
+                        <div class="form-group" style="margin-bottom:18px;">
+                            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:0;">
+                                <input type="checkbox" id="markPaid" name="markPaid" value="true" style="width:16px; height:16px; accent-color:var(--success);">
+                                <span style="font-size:13.5px; font-weight:500;">Collect Payment Now &amp; Mark Invoice as "Paid"</span>
+                            </label>
+                            <small class="text-muted" style="display:block; margin-top:4px; margin-left:26px;">
+                                If left unchecked, the invoice will be marked as "Pending" in patient ledger for later cashier collection.
+                            </small>
+                        </div>
+
+                        <!-- Patient Status Update -->
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label class="form-label" for="patientStatus">Update Patient Record Status</label>
+                            <select id="patientStatus" name="patientStatus" class="form-control">
+                                <option value="Discharged" selected>Discharged (Mark Inpatient Care Completed)</option>
+                                <option value="Active">Active (Keep Patient in Active Directory for OPD Follow-up)</option>
+                            </select>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Action Bar -->
+            <div class="card" style="padding:16px 24px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:13px; color:var(--text-muted);">
+                    <i class='bx bx-info-circle'></i> Discharging will release bed <strong th:text="${bed.bedNumber}">ICU-01</strong> to <strong>Available</strong> status for new admissions.
+                </div>
+                <div style="display:flex; gap:12px;">
+                    <a th:href="@{/beds}" class="btn btn-outline">Cancel</a>
+                    <button type="submit" class="btn btn-success" style="padding:10px 24px; font-weight:700;">
+                        <i class='bx bx-check-double'></i> Confirm Discharge &amp; Generate Summary Slip
+                    </button>
+                </div>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+</body>
+</html>

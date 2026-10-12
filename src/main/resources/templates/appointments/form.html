@@ -1,49 +1,325 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head}"></head>
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
-        <div class="page-header">
-            <h1><i class='bx bxs-calendar-check mr-1'></i> <span th:text="${appointment.id != null} ? 'Edit Appointment' : 'Book New Appointment'">New Appointment</span></h1>
-            <div class="page-actions"><a th:href="@{/appointments}" class="btn btn-outline"><i class='bx bx-arrow-back'></i> Back</a></div>
-        </div>
-        <div class="card">
-            <div class="card-body">
-                <form th:action="@{/appointments/save}" th:object="${appointment}" method="post">
-                    <input type="hidden" th:field="*{id}">
-                    <div class="form-row">
-                        <div class="form-group"><label>Patient *</label>
-                            <select name="patientId" class="form-control" required>
-                                <option value="">Select Patient</option>
-                                <option th:each="p : ${patients}" th:value="${p.id}" th:text="${p.fullName}" th:selected="${appointment.patient != null and appointment.patient.id == p.id}">Patient</option>
-                            </select>
-                        </div>
-                        <div class="form-group"><label>Doctor *</label>
-                            <select name="doctorId" class="form-control" required>
-                                <option value="">Select Doctor</option>
-                                <option th:each="d : ${doctors}" th:value="${d.id}" th:text="${d.fullName + ' (' + d.specialization + ')'}" th:selected="${appointment.doctor != null and appointment.doctor.id == d.id}">Doctor</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Date *</label><input type="date" th:field="*{appointmentDate}" class="form-control" required></div>
-                        <div class="form-group"><label>Time *</label><input type="time" th:field="*{appointmentTime}" class="form-control" required></div>
-                        <div class="form-group"><label>Status</label>
-                            <select th:field="*{status}" class="form-control">
-                                <option value="Scheduled">Scheduled</option><option value="In Progress">In Progress</option>
-                                <option value="Completed">Completed</option><option value="Cancelled">Cancelled</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group"><label>Reason</label><textarea th:field="*{reason}" class="form-control" rows="2" placeholder="Reason for visit"></textarea></div>
-                    <div class="form-group"><label>Notes</label><textarea th:field="*{notes}" class="form-control" rows="2" placeholder="Additional notes"></textarea></div>
-                    <div style="display:flex; gap:12px;">
-                        <button type="submit" class="btn btn-primary"><i class='bx bx-save'></i> <span th:text="${appointment.id != null} ? 'Update' : 'Book Appointment'">Save</span></button>
-                        <a th:href="@{/appointments}" class="btn btn-outline">Cancel</a>
-                    </div>
-                </form>
+        <!-- Page Header -->
+        <div class="page-header appointment-hero">
+            <div>
+                <h1>
+                    <i class='bx bxs-calendar-plus mr-1 text-primary'></i>
+                    <span th:text="${appointment.id != null} ? 'Edit Appointment' : 'Book New OPD Appointment'">Book New OPD Appointment</span>
+                </h1>
+                <p class="text-muted" style="margin-top:4px;">
+                    Schedule clinical consultations, doctor OPD slots, and specialist patient visits
+                </p>
+            </div>
+            <div class="page-actions">
+                <a th:href="@{/appointments}" class="btn btn-outline">
+                    <i class='bx bx-arrow-back'></i> Back to Schedule
+                </a>
             </div>
         </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:24px; align-items:start;">
+            <!-- Left Column: Booking Form -->
+            <div class="card">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-weight:700; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                        <i class='bx bx-calendar-event text-primary'></i> Consultation Booking Details
+                    </div>
+                    <span class="badge badge-scheduled" th:text="${appointment.id != null} ? 'Updating #' + ${appointment.id} : 'New Booking'">New Booking</span>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/appointments/save}" th:object="${appointment}" method="post" id="bookingForm">
+                        <input type="hidden" th:field="*{id}">
+
+                        <!-- Patient Selection -->
+                        <div class="form-group mb-3">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <label style="font-weight:600; margin:0;"><i class='bx bxs-user mr-1'></i> Patient *</label>
+                                <a th:href="@{/patients/add}" class="text-primary" style="font-size:12px; font-weight:600; text-decoration:none;">
+                                    <i class='bx bx-user-plus'></i> + New Patient
+                                </a>
+                            </div>
+                            <select name="patientId" id="patientSelect" class="form-control" required onchange="updatePreview()">
+                                <option value="">-- Choose Patient from Registry --</option>
+                                <option th:each="p : ${patients}" 
+                                        th:value="${p.id}" 
+                                        th:data-name="${p.fullName}"
+                                        th:data-pid="${p.patientId}"
+                                        th:data-gender="${p.gender}"
+                                        th:data-age="${p.age}"
+                                        th:text="${p.fullName + ' (' + p.patientId + ' - ' + p.gender + ', ' + p.age + 'y)'}" 
+                                        th:selected="${(appointment.patient != null and appointment.patient.id == p.id) or (selectedPatientId != null and selectedPatientId == p.id)}">
+                                    Patient Name (PID)
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Doctor Selection -->
+                        <div class="form-group mb-3">
+                            <label style="font-weight:600; margin-bottom:6px; display:block;"><i class='bx bx-plus-medical mr-1 text-primary'></i> Consulting Doctor / Specialist *</label>
+                            <select name="doctorId" id="doctorSelect" class="form-control" required onchange="updatePreview()">
+                                <option value="">-- Select Medical Consultant --</option>
+                                <option th:each="d : ${doctors}" 
+                                        th:value="${d.id}" 
+                                        th:data-name="${'Dr. ' + d.fullName}"
+                                        th:data-specialty="${d.specialization}"
+                                        th:data-fee="${d.consultationFee}"
+                                        th:data-days="${d.availableDays}"
+                                        th:data-time="${(d.availableTimeStart != null ? d.availableTimeStart : '09:00') + ' - ' + (d.availableTimeEnd != null ? d.availableTimeEnd : '17:00')}"
+                                        th:text="${'Dr. ' + d.fullName + ' — ' + d.specialization + ' (₹' + #numbers.formatDecimal(d.consultationFee != null ? d.consultationFee : 500, 0, 0) + ')'}" 
+                                        th:selected="${(appointment.doctor != null and appointment.doctor.id == d.id) or (selectedDoctorId != null and selectedDoctorId == d.id)}">
+                                    Doctor
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Date Selection with Fast Chips -->
+                        <div class="form-group mb-3">
+                            <label style="font-weight:600; margin-bottom:6px; display:block;"><i class='bx bx-calendar mr-1'></i> Appointment Date *</label>
+                            <input type="date" th:field="*{appointmentDate}" id="appointmentDateField" class="form-control mb-2" required onchange="updatePreview()">
+                            <!-- Fast Date Presets -->
+                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <button type="button" class="btn btn-sm btn-outline" style="font-size:11px; padding:3px 10px;" onclick="setDateOffset(0)">Today</button>
+                                <button type="button" class="btn btn-sm btn-outline" style="font-size:11px; padding:3px 10px;" onclick="setDateOffset(1)">Tomorrow</button>
+                                <button type="button" class="btn btn-sm btn-outline" style="font-size:11px; padding:3px 10px;" onclick="setDateOffset(2)">In 2 Days</button>
+                                <button type="button" class="btn btn-sm btn-outline" style="font-size:11px; padding:3px 10px;" onclick="setDateOffset(7)">Next Week</button>
+                            </div>
+                        </div>
+
+                        <!-- Time Slot Selection with Fast Slots -->
+                        <div class="form-group mb-3">
+                            <label style="font-weight:600; margin-bottom:6px; display:block;"><i class='bx bx-time-five mr-1'></i> Appointment Time Slot *</label>
+                            <input type="time" th:field="*{appointmentTime}" id="appointmentTimeField" class="form-control mb-2" required onchange="updatePreview()">
+                            <!-- Slot Presets -->
+                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <span class="text-muted" style="font-size:11px; align-self:center; font-weight:600;">Presets:</span>
+                                <button type="button" class="btn btn-sm btn-outline" style="font-size:11px; padding:3px 8px;" onclick="setTime('09:30')">09:30 AM</button>
+                                <button type="button" class="btn btn-sm btn-outline" style="font-size:11px; padding:3px 8px;" onclick="setTime('10:30')">10:30 AM</button>
+                                <button type="button" class="btn btn-sm btn-outline" style="font-size:11px; padding:3px 8px;" onclick="setTime('11:30')">11:30 AM</button>
+                                <button type="button" class="btn btn-sm btn-outline" style="font-size:11px; padding:3px 8px;" onclick="setTime('14:00')">02:00 PM</button>
+                                <button type="button" class="btn btn-sm btn-outline" style="font-size:11px; padding:3px 8px;" onclick="setTime('16:00')">04:00 PM</button>
+                                <button type="button" class="btn btn-sm btn-outline" style="font-size:11px; padding:3px 8px;" onclick="setTime('18:00')">06:00 PM</button>
+                            </div>
+                        </div>
+
+                        <!-- Appointment Status -->
+                        <div class="form-group mb-3">
+                            <label style="font-weight:600; margin-bottom:6px; display:block;"><i class='bx bx-check-circle mr-1'></i> Status</label>
+                            <select th:field="*{status}" id="statusSelect" class="form-control" onchange="updatePreview()">
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="In Progress">In Progress (At OPD)</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+
+                        <!-- Reason / Symptoms with Fast Pills -->
+                        <div class="form-group mb-3">
+                            <label style="font-weight:600; margin-bottom:6px; display:block;"><i class='bx bx-comment-detail mr-1'></i> Reason for Visit / Symptoms</label>
+                            <textarea th:field="*{reason}" id="reasonField" class="form-control mb-2" rows="2" placeholder="e.g. Follow-up consultation, chest discomfort, persistent fever..." oninput="updatePreview()"></textarea>
+                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <span class="text-muted" style="font-size:11px; align-self:center; font-weight:600;">Suggestions:</span>
+                                <button type="button" class="btn btn-sm btn-outline" style="font-size:11px; padding:2px 8px;" onclick="appendReason('General OPD Checkup')">General Checkup</button>
+                                <button type="button" class="btn btn-sm btn-outline" style="font-size:11px; padding:2px 8px;" onclick="appendReason('Routine Follow-up')">Follow-up</button>
+                                <button type="button" class="btn btn-sm btn-outline" style="font-size:11px; padding:2px 8px;" onclick="appendReason('Fever & Bodyache')">Fever</button>
+                                <button type="button" class="btn btn-sm btn-outline" style="font-size:11px; padding:2px 8px;" onclick="appendReason('Hypertension Review')">Hypertension</button>
+                                <button type="button" class="btn btn-sm btn-outline" style="font-size:11px; padding:2px 8px;" onclick="appendReason('Chest Discomfort')">Chest Pain</button>
+                            </div>
+                        </div>
+
+                        <!-- Additional Clinical Notes -->
+                        <div class="form-group mb-4">
+                            <label style="font-weight:600; margin-bottom:6px; display:block;"><i class='bx bx-notepad mr-1'></i> Front Desk / Clinical Notes</label>
+                            <textarea th:field="*{notes}" class="form-control" rows="2" placeholder="Any special instructions, wheelchair requirement, or prior record references..."></textarea>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div style="display:flex; gap:12px; margin-top:20px;">
+                            <button type="submit" class="btn btn-primary" style="flex:1; padding:12px; font-weight:700; font-size:15px; display:flex; justify-content:center; align-items:center; gap:8px;">
+                                <i class='bx bx-check-double' style="font-size:20px;"></i>
+                                <span th:text="${appointment.id != null} ? 'Update Appointment' : 'Confirm & Book Appointment'">Confirm &amp; Book Appointment</span>
+                            </button>
+                            <a th:href="@{/appointments}" class="btn btn-outline" style="padding:12px 20px;">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Column: Live Booking Confirmation Preview -->
+            <div>
+                <div class="card mb-4" style="border-top:4px solid var(--primary);">
+                    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-weight:700; font-size:1rem; display:flex; align-items:center; gap:8px;">
+                            <i class='bx bx-badge-check text-primary' style="font-size:20px;"></i> Live Booking Slip Preview
+                        </div>
+                        <span id="previewStatusBadge" class="badge badge-scheduled">Scheduled</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- Hospital Header -->
+                        <div style="text-align:center; padding-bottom:16px; border-bottom:1px dashed var(--border); margin-bottom:16px;">
+                            <div style="font-size:24px; margin-bottom:4px;">🏥</div>
+                            <h3 style="font-size:1.15rem; font-weight:800; margin:0; color:var(--text-primary);">MedCare Hospital &amp; Medical Center</h3>
+                            <p class="text-muted" style="font-size:12px; margin:2px 0 0 0;">Outpatient Department (OPD) Appointment Pass</p>
+                        </div>
+
+                        <!-- Patient Info in Preview -->
+                        <div style="background:var(--bg-glass); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:14px;">
+                            <div class="text-muted" style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px;">Patient Details</div>
+                            <div id="previewPatientName" style="font-weight:700; font-size:1.05rem; color:var(--text-primary); margin-top:2px;">
+                                Select Patient from form
+                            </div>
+                            <div id="previewPatientMeta" style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                                PID: — | Gender: — | Age: —
+                            </div>
+                        </div>
+
+                        <!-- Doctor Info in Preview -->
+                        <div style="background:var(--bg-glass); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:14px;">
+                            <div class="text-muted" style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px;">Consulting Physician</div>
+                            <div id="previewDoctorName" style="font-weight:700; font-size:1.05rem; color:var(--primary); margin-top:2px;">
+                                Select Doctor from form
+                            </div>
+                            <div id="previewDoctorSpecialty" style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                                Department: —
+                            </div>
+                            <div id="previewDoctorHours" style="font-size:11px; color:var(--text-secondary); margin-top:4px;">
+                                <i class='bx bx-time'></i> Clinic Hours: —
+                            </div>
+                        </div>
+
+                        <!-- Schedule Meta Grid -->
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+                            <div style="background:var(--bg-glass); border:1px solid var(--border); border-radius:8px; padding:12px;">
+                                <div class="text-muted" style="font-size:11px; text-transform:uppercase;">Scheduled Date</div>
+                                <div id="previewDate" style="font-weight:700; font-size:14px; margin-top:3px; color:var(--text-primary);">
+                                    —
+                                </div>
+                            </div>
+                            <div style="background:var(--bg-glass); border:1px solid var(--border); border-radius:8px; padding:12px;">
+                                <div class="text-muted" style="font-size:11px; text-transform:uppercase;">Scheduled Time</div>
+                                <div id="previewTime" style="font-weight:700; font-size:14px; margin-top:3px; color:var(--text-primary);">
+                                    —
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estimated Consultation Fee -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(16, 185, 129, 0.1); border:1px solid rgba(16, 185, 129, 0.25); border-radius:8px; margin-bottom:16px;">
+                            <div>
+                                <div style="font-size:12px; font-weight:600; color:var(--text-primary);">OPD Consultation Fee</div>
+                                <small class="text-muted">Payable at clinic reception desk</small>
+                            </div>
+                            <div id="previewFee" style="font-size:1.25rem; font-weight:800; color:#10b981;">
+                                ₹500.00
+                            </div>
+                        </div>
+
+                        <!-- Instructions -->
+                        <div style="font-size:12px; color:var(--text-muted); line-height:1.5; padding:10px; background:var(--bg-glass); border-radius:6px;">
+                            <i class='bx bx-info-circle text-primary'></i> 
+                            Please instruct patient to report to OPD Desk 15 minutes prior to appointment time with their PID pass.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Form & Preview Sync Script -->
+        <script>
+            function setDateOffset(days) {
+                const d = new Date();
+                d.setDate(d.getDate() + days);
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                document.getElementById('appointmentDateField').value = `${year}-${month}-${day}`;
+                updatePreview();
+            }
+
+            function setTime(timeStr) {
+                document.getElementById('appointmentTimeField').value = timeStr;
+                updatePreview();
+            }
+
+            function appendReason(text) {
+                const f = document.getElementById('reasonField');
+                if (!f.value.trim()) {
+                    f.value = text;
+                } else if (!f.value.includes(text)) {
+                    f.value += ', ' + text;
+                }
+                updatePreview();
+            }
+
+            function updatePreview() {
+                const patientSelect = document.getElementById('patientSelect');
+                const doctorSelect = document.getElementById('doctorSelect');
+                const dateField = document.getElementById('appointmentDateField');
+                const timeField = document.getElementById('appointmentTimeField');
+                const statusSelect = document.getElementById('statusSelect');
+
+                // Patient preview
+                if (patientSelect.selectedIndex > 0) {
+                    const opt = patientSelect.options[patientSelect.selectedIndex];
+                    document.getElementById('previewPatientName').textContent = opt.dataset.name || opt.text;
+                    document.getElementById('previewPatientMeta').textContent = 
+                        `PID: ${opt.dataset.pid || '—'} | Gender: ${opt.dataset.gender || '—'} | Age: ${opt.dataset.age || '—'}y`;
+                } else {
+                    document.getElementById('previewPatientName').textContent = 'Select Patient from form';
+                    document.getElementById('previewPatientMeta').textContent = 'PID: — | Gender: — | Age: —';
+                }
+
+                // Doctor preview
+                if (doctorSelect.selectedIndex > 0) {
+                    const opt = doctorSelect.options[doctorSelect.selectedIndex];
+                    document.getElementById('previewDoctorName').textContent = opt.dataset.name || opt.text;
+                    document.getElementById('previewDoctorSpecialty').textContent = `Department: ${opt.dataset.specialty || 'General OPD'}`;
+                    document.getElementById('previewDoctorHours').innerHTML = `<i class='bx bx-time'></i> ${opt.dataset.days || 'Mon-Sat'}: ${opt.dataset.time || '09:00 - 17:00'}`;
+                    if (opt.dataset.fee) {
+                        document.getElementById('previewFee').textContent = `₹${parseFloat(opt.dataset.fee).toFixed(2)}`;
+                    }
+                } else {
+                    document.getElementById('previewDoctorName').textContent = 'Select Doctor from form';
+                    document.getElementById('previewDoctorSpecialty').textContent = 'Department: —';
+                    document.getElementById('previewDoctorHours').innerHTML = `<i class='bx bx-time'></i> Clinic Hours: —`;
+                    document.getElementById('previewFee').textContent = '₹500.00';
+                }
+
+                // Date & Time preview
+                document.getElementById('previewDate').textContent = dateField.value || '—';
+                document.getElementById('previewTime').textContent = timeField.value || '—';
+
+                // Status preview
+                const statusBadge = document.getElementById('previewStatusBadge');
+                statusBadge.textContent = statusSelect.value;
+                if (statusSelect.value === 'Completed') {
+                    statusBadge.className = 'badge badge-available';
+                } else if (statusSelect.value === 'In Progress') {
+                    statusBadge.className = 'badge badge-maintenance';
+                } else if (statusSelect.value === 'Cancelled') {
+                    statusBadge.className = 'badge badge-danger';
+                } else {
+                    statusBadge.className = 'badge badge-scheduled';
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                // Default date to today if empty
+                const dateField = document.getElementById('appointmentDateField');
+                if (!dateField.value) {
+                    setDateOffset(0);
+                }
+                const timeField = document.getElementById('appointmentTimeField');
+                if (!timeField.value) {
+                    setTime('10:00');
+                }
+                updatePreview();
+            });
+        </script>
     </div>
 </div>
 </body>

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout :: head}"></head>
+<body>
+<div th:replace="~{layout :: layout(~{::content})}">
+    <div th:fragment="content">
+
+        <!-- Page Header & Action Buttons -->
+        <div class="page-header appointment-hero d-print-none">
+            <div>
+                <h1><i class='bx bxs-calendar-check mr-1 text-primary'></i> Appointment Details</h1>
+                <p class="text-muted" style="margin-top:4px;">Consultation booking summary, patient vitals &amp; clinical follow-ups</p>
+            </div>
+            <div class="page-actions" style="display:flex; gap:8px; flex-wrap:wrap;">
+                <!-- Fast Workflow Actions -->
+                <a th:if="${appointment.patient != null}"
+                   th:href="@{/prescriptions/add(appointmentId=${appointment.id},patientId=${appointment.patient.id})}"
+                   class="btn btn-primary" style="background:#6366f1; border-color:#6366f1;">
+                    <i class='bx bx-notepad'></i> Write Prescription (Rx)
+                </a>
+                <a th:if="${appointment.patient != null and appointment.doctor != null}"
+                   th:href="@{/lab/add(patientId=${appointment.patient.id},doctorId=${appointment.doctor.id})}"
+                   class="btn btn-outline">
+                    <i class='bx bxs-flask'></i> Order Lab Test
+                </a>
+                <a th:if="${appointment.patient != null}"
+                   th:href="@{/billing/add(patientId=${appointment.patient.id})}"
+                   class="btn btn-outline">
+                    <i class='bx bxs-receipt'></i> Generate Bill
+                </a>
+                <a th:if="${appointment.status == 'Scheduled'}"
+                   th:href="@{/appointments/complete/{id}(id=${appointment.id},redirect='/appointments/view/' + ${appointment.id})}"
+                   class="btn btn-success" title="Mark Consultation Completed">
+                    <i class='bx bx-check'></i> Mark Completed
+                </a>
+                <a th:if="${appointment.status == 'Scheduled'}"
+                   th:href="@{/appointments/cancel/{id}(id=${appointment.id},redirect='/appointments/view/' + ${appointment.id})}"
+                   class="btn btn-danger" onclick="return confirm('Cancel this appointment?');">
+                    <i class='bx bx-x'></i> Cancel
+                </a>
+                <a th:href="@{/appointments/edit/{id}(id=${appointment.id})}" class="btn btn-outline">
+                    <i class='bx bx-edit'></i> Edit
+                </a>
+                <a th:href="@{/appointments}" class="btn btn-outline">
+                    <i class='bx bx-arrow-back'></i> All Appointments
+                </a>
+                <button onclick="window.print()" class="btn btn-outline">
+                    <i class='bx bx-printer'></i> Print Slip
+                </button>
+            </div>
+        </div>
+
+        <!-- Feedback Alert Messages -->
+        <div th:if="${success}" class="alert alert-success d-print-none">
+            <i class='bx bx-check-circle'></i>
+            <span th:text="${success}">Success</span>
+        </div>
+
+        <!-- Appointment Header Card -->
+        <div class="card" style="margin-bottom:24px;">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:48px; height:48px; border-radius:12px; background:var(--bg-surface-hover); display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--primary);">
+                        <i class='bx bx-calendar'></i>
+                    </div>
+                    <div>
+                        <h2 style="font-size:1.25rem; font-weight:700; margin:0;">
+                            Appointment <span style="font-family:monospace; color:var(--primary);" th:text="'#APT-' + ${appointment.id}">#APT-1</span>
+                        </h2>
+                        <p class="text-muted" style="margin:2px 0 0 0; font-size:13px;">
+                            Scheduled for <strong th:text="${appointment.appointmentDate}">2026-10-06</strong> at <strong th:text="${appointment.appointmentTime}">10:00</strong>
+                        </p>
+                    </div>
+                </div>
+                <div>
+                    <span class="badge" style="font-size:14px; padding:6px 14px;"
+                          th:classappend="${appointment.status == 'Scheduled'} ? 'badge-scheduled' : (${appointment.status == 'Completed'} ? 'badge-completed' : (${appointment.status == 'Cancelled'} ? 'badge-cancelled' : 'badge-in-progress'))"
+                          th:text="${appointment.status}">Scheduled</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
+                    <div class="detail-item">
+                        <div class="detail-label">Consultation Date</div>
+                        <div class="detail-value" style="font-weight:600;" th:text="${appointment.appointmentDate}">2026-10-06</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Consultation Time</div>
+                        <div class="detail-value" style="font-weight:600;" th:text="${appointment.appointmentTime}">10:00</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Department</div>
+                        <div class="detail-value">
+                            <span class="badge badge-maintenance" th:text="${appointment.doctor != null ? appointment.doctor.specialization : 'General OPD'}">Cardiology</span>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Consultation Fee</div>
+                        <div class="detail-value" style="font-weight:700; color:var(--success);">
+                            ₹<span th:text="${appointment.doctor != null ? appointment.doctor.consultationFee : 500}">500</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient & Doctor Split Grid -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:24px; margin-bottom:24px;">
+
+            <!-- Patient Information Card -->
+            <div class="card" th:if="${appointment.patient != null}">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="font-size:1.05rem; margin:0;"><i class='bx bxs-user mr-1 text-primary'></i> Patient Information</h3>
+                    <a th:href="@{/patients/view/{id}(id=${appointment.patient.id})}" class="btn btn-sm btn-outline">
+                        <i class='bx bx-id-card'></i> 360° Profile
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+                        <div style="width:52px; height:52px; border-radius:50%; background:var(--gradient-primary); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.3rem; font-weight:700;">
+                            <span th:text="${#strings.substring(appointment.patient.fullName, 0, 1).toUpperCase()}">P</span>
+                        </div>
+                        <div>
+                            <div style="font-size:1.15rem; font-weight:700;" th:text="${appointment.patient.fullName}">Patient Name</div>
+                            <div style="font-size:13px; color:var(--text-muted);">
+                                <span style="font-family:monospace; font-weight:600;" th:text="${appointment.patient.patientId}">PID-1001</span> &bull; 
+                                <span th:text="${appointment.patient.gender}">Gender</span>, 
+                                <span th:text="${appointment.patient.age} + ' yrs'">30 yrs</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Allergy Warning if applicable -->
+                    <div th:if="${appointment.patient.allergies != null and !#strings.isEmpty(appointment.patient.allergies) and appointment.patient.allergies != 'None' and appointment.patient.allergies != 'none'}"
+                         style="background:var(--danger-light); border:1px solid var(--danger-border); border-radius:8px; padding:10px 14px; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+                        <i class='bx bxs-error-circle text-red' style="font-size:18px;"></i>
+                        <span style="font-size:13px; color:var(--danger-text); font-weight:600;">
+                            Allergies: <span th:text="${appointment.patient.allergies}">Penicillin</span>
+                        </span>
+                    </div>
+
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Phone Number</div>
+                            <div class="detail-value" th:text="${appointment.patient.phone ?: 'Not provided'}">-</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Blood Group</div>
+                            <div class="detail-value">
+                                <span class="badge badge-active" th:text="${appointment.patient.bloodGroup ?: 'Unknown'}">O+</span>
+                            </div>
+                        </div>
+                        <div class="detail-item" style="grid-column:1 / -1;">
+                            <div class="detail-label">Email</div>
+                            <div class="detail-value" th:text="${appointment.patient.email ?: 'Not provided'}">-</div>
+                        </div>
+                        <div class="detail-item" style="grid-column:1 / -1;">
+                            <div class="detail-label">Prior Medical History</div>
+                            <div class="detail-value" th:text="${appointment.patient.medicalHistory ?: 'None documented'}">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Doctor Information Card -->
+            <div class="card" th:if="${appointment.doctor != null}">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="font-size:1.05rem; margin:0;"><i class='bx bxs-user-badge mr-1 text-primary'></i> Consulting Doctor</h3>
+                    <a th:href="@{/doctors/view/{id}(id=${appointment.doctor.id})}" class="btn btn-sm btn-outline">
+                        <i class='bx bx-user'></i> Doctor Profile
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+                        <div style="width:52px; height:52px; border-radius:50%; background:var(--gradient-success); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.3rem; font-weight:700;">
+                            <span>Dr</span>
+                        </div>
+                        <div>
+                            <div style="font-size:1.15rem; font-weight:700;" th:text="'Dr. ' + ${appointment.doctor.fullName}">Dr. Rajesh Sharma</div>
+                            <div style="font-size:13px; color:var(--text-muted);">
+                                <span th:text="${appointment.doctor.qualification ?: 'MBBS, MD'}">MBBS</span> &bull; 
+                                <span style="font-weight:600; color:var(--primary);" th:text="${appointment.doctor.specialization}">Cardiology</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Available Days</div>
+                            <div class="detail-value" th:text="${appointment.doctor.availableDays ?: 'Mon - Fri'}">-</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">OPD Timing</div>
+                            <div class="detail-value" th:text="${(appointment.doctor.availableTimeStart ?: '09:00') + ' - ' + (appointment.doctor.availableTimeEnd ?: '17:00')}">-</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Contact Phone</div>
+                            <div class="detail-value" th:text="${appointment.doctor.phone ?: 'Hospital Desk'}">-</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Doctor Status</div>
+                            <div class="detail-value">
+                                <span class="badge" th:classappend="${appointment.doctor.status == 'Active'} ? 'badge-active' : 'badge-inactive'" th:text="${appointment.doctor.status}">Active</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Clinical Notes & Reason for Consultation -->
+        <div class="card" style="margin-bottom:24px;">
+            <div class="card-header">
+                <h3 style="font-size:1.05rem; margin:0;"><i class='bx bx-edit-alt mr-1 text-primary'></i> Clinical Notes &amp; Chief Complaints</h3>
+            </div>
+            <div class="card-body">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
+                    <div>
+                        <div class="detail-label" style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Chief Complaint / Visit Reason</div>
+                        <div style="margin-top:6px; padding:14px; background:var(--bg-surface-hover); border-radius:8px; font-size:14px; line-height:1.6;"
+                             th:text="${appointment.reason != null and !#strings.isEmpty(appointment.reason) ? appointment.reason : 'General medical checkup and consultation.'}">
+                            Reason for appointment
+                        </div>
+                    </div>
+                    <div>
+                        <div class="detail-label" style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Physician's Consultation Notes</div>
+                        <div style="margin-top:6px; padding:14px; background:var(--bg-surface-hover); border-radius:8px; font-size:14px; line-height:1.6;"
+                             th:text="${appointment.notes != null and !#strings.isEmpty(appointment.notes) ? appointment.notes : 'No specific physician notes recorded yet. Doctor can update notes or issue prescription.'}">
+                            Consultation notes
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Prescriptions & Labs for this Patient -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:24px;" class="d-print-none">
+
+            <!-- Prescriptions Widget -->
+            <div class="card">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="font-size:1rem; margin:0;"><i class='bx bx-notepad text-primary mr-1'></i> Patient Prescriptions</h3>
+                    <a th:if="${appointment.patient != null}"
+                       th:href="@{/prescriptions/add(appointmentId=${appointment.id},patientId=${appointment.patient.id})}"
+                       class="btn btn-sm btn-primary">
+                        <i class='bx bx-plus'></i> New Rx
+                    </a>
+                </div>
+                <div class="card-body" style="padding:0;">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr><th>Rx #</th><th>Date</th><th>Diagnosis</th><th>Status</th><th>Action</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="rx : ${patientPrescriptions}">
+                                    <td style="font-family:monospace; font-weight:600;" th:text="${rx.prescriptionNumber}">RX-001</td>
+                                    <td th:text="${#temporals.format(rx.prescriptionDate, 'dd/MM/yyyy')}">06/10/2026</td>
+                                    <td th:text="${rx.diagnosis}">Diagnosis</td>
+                                    <td>
+                                        <span class="badge" th:classappend="${rx.status == 'Dispensed'} ? 'badge-paid' : 'badge-active'" th:text="${rx.status}">Active</span>
+                                    </td>
+                                    <td>
+                                        <a th:href="@{/prescriptions/view/{id}(id=${rx.id})}" class="btn btn-sm btn-outline"><i class='bx bx-show'></i></a>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(patientPrescriptions)}">
+                                    <td colspan="5" style="text-align:center; padding:16px; color:var(--text-muted); font-size:13px;">
+                                        No prescriptions written yet.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lab Reports Widget -->
+            <div class="card">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="font-size:1rem; margin:0;"><i class='bx bxs-flask text-primary mr-1'></i> Patient Lab Tests</h3>
+                    <a th:if="${appointment.patient != null and appointment.doctor != null}"
+                       th:href="@{/lab/add(patientId=${appointment.patient.id},doctorId=${appointment.doctor.id})}"
+                       class="btn btn-sm btn-outline">
+                        <i class='bx bx-plus'></i> Order Lab
+                    </a>
+                </div>
+                <div class="card-body" style="padding:0;">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr><th>Ref</th><th>Test Name</th><th>Status</th><th>Action</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="lr : ${patientLabReports}">
+                                    <td style="font-family:monospace;" th:text="'LAB-' + ${lr.id}">LAB-1</td>
+                                    <td th:text="${lr.testName}">CBC</td>
+                                    <td>
+                                        <span class="badge" th:classappend="${lr.status == 'Completed'} ? 'badge-paid' : 'badge-pending'" th:text="${lr.status}">Status</span>
+                                    </td>
+                                    <td>
+                                        <a th:href="@{/lab/view/{id}(id=${lr.id})}" class="btn btn-sm btn-outline"><i class='bx bx-show'></i></a>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(patientLabReports)}">
+                                    <td colspan="4" style="text-align:center; padding:16px; color:var(--text-muted); font-size:13px;">
+                                        No diagnostic reports ordered.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

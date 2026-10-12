@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout :: head}"></head>
+<body class="emergency-page">
+<div th:replace="~{layout :: layout(~{::content})}">
+    <div th:fragment="content">
+        <!-- Page Header -->
+        <div class="page-header emergency-hero">
+            <div>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                    <span class="badge badge-code-red" style="font-size:11px;">
+                        Emergency Department (ED)
+                    </span>
+                    <span class="badge" style="background:var(--bg-surface-hover); color:var(--text-secondary); border:1px solid var(--border-color); font-size:11px;">
+                        Triage &amp; Acute Care
+                    </span>
+                </div>
+                <h1>
+                    <i class='bx bxs-ambulance mr-2'></i>
+                    <span>Emergency Department &amp; Triage</span>
+                </h1>
+                <p class="text-muted">
+                    Active emergency patient queue, triage assessment, and inpatient admissions
+                </p>
+            </div>
+            <div class="page-actions">
+                <a th:href="@{/beds}" class="btn btn-outline">
+                    <i class='bx bxs-bed'></i> <span th:text="${availableBedsCount}">0</span> Beds Available
+                </a>
+                <a th:href="@{/emergency/intake}" class="btn btn-danger">
+                    <i class='bx bx-plus-medical'></i> + New Emergency Intake
+                </a>
+            </div>
+        </div>
+
+        <!-- KPI Triage Metrics Row -->
+        <div class="stats-grid mb-4">
+            <div class="stat-card" style="border-left: 4px solid var(--danger);">
+                <div class="stat-icon" style="background: var(--danger-light); color: var(--danger);">
+                    <i class='bx bxs-error-circle'></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" style="color:var(--danger);" th:text="${codeRedCount}">0</span>
+                    <span class="stat-label">Code Red (Immediate)</span>
+                </div>
+                <span class="badge badge-code-red" style="position:absolute; top:16px; right:16px; font-size:10px;">Priority 1</span>
+            </div>
+
+            <div class="stat-card" style="border-left: 4px solid var(--warning);">
+                <div class="stat-icon" style="background: var(--warning-light); color: var(--warning);">
+                    <i class='bx bx-pulse'></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" style="color:var(--warning);" th:text="${codeOrangeCount}">0</span>
+                    <span class="stat-label">Code Orange (Emergent)</span>
+                </div>
+                <span class="badge badge-code-orange" style="position:absolute; top:16px; right:16px; font-size:10px;">Priority 2</span>
+            </div>
+
+            <div class="stat-card" style="border-left: 4px solid var(--primary);">
+                <div class="stat-icon" style="background: var(--primary-light); color: var(--primary);">
+                    <i class='bx bx-user-voice'></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" style="color:var(--primary);" th:text="${activeCases}">0</span>
+                    <span class="stat-label">Active in ER Bays</span>
+                </div>
+                <span class="badge" style="background:var(--primary-light); color:var(--primary); position:absolute; top:16px; right:16px; font-size:10px;">Active Queue</span>
+            </div>
+
+            <div class="stat-card" style="border-left: 4px solid var(--success);">
+                <div class="stat-icon" style="background: var(--success-light); color: var(--success);">
+                    <i class='bx bx-check-shield'></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" style="color:var(--success);" th:text="${totalCases}">0</span>
+                    <span class="stat-label">Total Handled Intake</span>
+                </div>
+                <span class="badge" style="background:var(--success-light); color:var(--success); position:absolute; top:16px; right:16px; font-size:10px;">Historical</span>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="card mb-4" style="padding:16px 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                <!-- Queue Filters -->
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <span style="font-size:12.5px; font-weight:600; color:var(--text-muted); margin-right:4px;">
+                        <i class='bx bx-filter-alt mr-1'></i> View:
+                    </span>
+                    <a th:href="@{/emergency(filter='ACTIVE', triage=${selectedTriage})}" 
+                       class="btn btn-sm" 
+                       th:classappend="${selectedFilter == 'ACTIVE' or selectedFilter == null} ? 'btn-primary' : 'btn-outline'">
+                        <i class='bx bx-list-ul'></i> Active ER Queue (<span th:text="${activeCases}">0</span>)
+                    </a>
+                    <a th:href="@{/emergency(filter='ADMITTED', triage=${selectedTriage})}" 
+                       class="btn btn-sm" 
+                       th:classappend="${selectedFilter == 'ADMITTED'} ? 'btn-primary' : 'btn-outline'">
+                        <i class='bx bxs-bed'></i> Transferred / Admitted
+                    </a>
+                    <a th:href="@{/emergency(filter='DISCHARGED', triage=${selectedTriage})}" 
+                       class="btn btn-sm" 
+                       th:classappend="${selectedFilter == 'DISCHARGED'} ? 'btn-primary' : 'btn-outline'">
+                        <i class='bx bx-check-double'></i> Discharged
+                    </a>
+                    <a th:href="@{/emergency(filter='ALL', triage=${selectedTriage})}" 
+                       class="btn btn-sm" 
+                       th:classappend="${selectedFilter == 'ALL'} ? 'btn-primary' : 'btn-outline'">
+                        All Records (<span th:text="${totalCases}">0</span>)
+                    </a>
+                </div>
+
+                <!-- Triage Priority Filter -->
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <span style="font-size:12.5px; font-weight:600; color:var(--text-muted);">Triage:</span>
+                    <a th:href="@{/emergency(filter=${selectedFilter}, triage='ALL')}" 
+                       class="btn btn-sm" 
+                       th:classappend="${selectedTriage == null or selectedTriage == 'ALL'} ? 'btn-primary' : 'btn-outline'">
+                        All
+                    </a>
+                    <a th:href="@{/emergency(filter=${selectedFilter}, triage='CODE_RED')}" 
+                       class="badge badge-code-red" 
+                       style="text-decoration:none; padding:6px 10px;">
+                        Code Red
+                    </a>
+                    <a th:href="@{/emergency(filter=${selectedFilter}, triage='CODE_ORANGE')}" 
+                       class="badge badge-code-orange" 
+                       style="text-decoration:none; padding:6px 10px;">
+                        Code Orange
+                    </a>
+                    <a th:href="@{/emergency(filter=${selectedFilter}, triage='CODE_YELLOW')}" 
+                       class="badge badge-code-yellow" 
+                       style="text-decoration:none; padding:6px 10px;">
+                        Code Yellow
+                    </a>
+                    <a th:href="@{/emergency(filter=${selectedFilter}, triage='CODE_GREEN')}" 
+                       class="badge badge-code-green" 
+                       style="text-decoration:none; padding:6px 10px;">
+                        Code Green
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Cases Roster Table -->
+        <div class="card">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-weight:700; font-size:1.1rem; color:var(--text-primary);">
+                        <i class='bx bx-pulse text-danger mr-1'></i> Emergency Triage Case Roster
+                    </span>
+                    <span class="badge" style="background:rgba(255,255,255,0.08); color:var(--text-muted); font-size:12px;">
+                        <span th:text="${cases.size()}">0</span> cases displayed
+                    </span>
+                </div>
+                <div style="font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
+                    <span class="badge badge-code-red" style="font-size:10px;">Priority 1 = 0m</span>
+                    <span class="badge badge-code-orange" style="font-size:10px;">P2 = &lt;10m</span>
+                    <span class="badge badge-code-yellow" style="font-size:10px;">P3 = &lt;30m</span>
+                    <span class="badge badge-code-green" style="font-size:10px;">P4 = &lt;60m</span>
+                </div>
+            </div>
+
+            <div class="card-body" style="padding:0;">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Case # &amp; Arrival</th>
+                                <th>Triage Priority</th>
+                                <th>Patient Demographic</th>
+                                <th>Trauma Bay &amp; Mode</th>
+                                <th>Clinical Vitals Strip</th>
+                                <th>Chief Complaint</th>
+                                <th>ER Status</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${#lists.isEmpty(cases)}">
+                                <td colspan="8" style="text-align:center; padding:48px 20px;">
+                                    <div style="font-size:42px; color:var(--text-muted); margin-bottom:12px;">
+                                        <i class='bx bxs-ambulance'></i>
+                                    </div>
+                                    <h3 style="font-size:1.1rem; margin-bottom:6px; color:var(--text-primary);">No Emergency Cases in this View</h3>
+                                    <p class="text-muted" style="margin-bottom:16px;">The emergency queue for this filter criteria is currently clear.</p>
+                                    <a th:href="@{/emergency/intake}" class="btn btn-danger btn-sm">
+                                        <i class='bx bx-plus-medical'></i> New Intake
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr th:each="c : ${cases}">
+                                <!-- Case # & Arrival -->
+                                <td>
+                                    <div style="font-weight:700; font-size:13.5px; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+                                        <span th:text="${c.caseNumber}">ER-20261011-001</span>
+                                    </div>
+                                    <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">
+                                        <i class='bx bx-time-five'></i>
+                                        <span th:text="${#temporals.format(c.arrivalDateTime, 'HH:mm dd-MMM')}">23:05</span>
+                                    </div>
+                                </td>
+
+                                <!-- Triage Priority -->
+                                <td>
+                                    <span class="badge" 
+                                          th:classappend="${c.triageBadgeClass}"
+                                          style="font-size:12px; padding:4px 8px;">
+                                        <span th:text="${c.triageLevel.replace('_', ' ')}">CODE RED</span>
+                                    </span>
+                                    <div style="font-size:10.5px; color:var(--text-muted); margin-top:4px;">
+                                        <span th:if="${c.triageLevel == 'CODE_RED'}" style="color:var(--danger); font-weight:600;">Immediate (0 min)</span>
+                                        <span th:if="${c.triageLevel == 'CODE_ORANGE'}" style="color:var(--warning); font-weight:600;">Very Urgent (&lt;10 min)</span>
+                                        <span th:if="${c.triageLevel == 'CODE_YELLOW'}" style="color:var(--warning);">Urgent (&lt;30 min)</span>
+                                        <span th:if="${c.triageLevel == 'CODE_GREEN'}" style="color:var(--success);">Standard (&lt;60 min)</span>
+                                        <span th:if="${c.triageLevel == 'CODE_BLUE'}" style="color:var(--info);">Non-Urgent (&lt;120 min)</span>
+                                    </div>
+                                </td>
+
+                                <!-- Patient Demographics -->
+                                <td>
+                                    <div style="font-weight:600; color:var(--text-primary); display:flex; align-items:center; gap:6px;">
+                                        <a th:if="${c.patient != null}" th:href="@{/patients/view/{id}(id=${c.patient.id})}" 
+                                           style="color:var(--primary); text-decoration:none;" th:text="${c.patientName}">
+                                            John Doe
+                                        </a>
+                                        <span th:if="${c.patient == null}" th:text="${c.patientName}" style="color:var(--danger); font-weight:600;">
+                                            [Unidentified Patient]
+                                        </span>
+                                    </div>
+                                    <div style="font-size:11.5px; color:var(--text-muted); margin-top:2px;">
+                                        <span th:text="${c.gender != null ? c.gender : 'Unknown'}">Male</span>, 
+                                        <span th:text="${c.age != null ? c.age + 'y' : 'Age ?'}">35y</span>
+                                        <span th:if="${c.isUnidentified}" class="badge badge-code-red" style="font-size:9.5px; padding:2px 5px; margin-left:4px;">
+                                            Unidentified
+                                        </span>
+                                    </div>
+                                </td>
+
+                                <!-- Bay & Arrival Mode -->
+                                <td>
+                                    <div class="er-bay-badge" style="margin-bottom:4px;">
+                                        <i class='bx bx-bed'></i>
+                                        <span th:text="${c.bayNumber != null ? c.bayNumber : 'ER Intake Desk'}">Trauma Bay 1</span>
+                                    </div>
+                                    <div style="font-size:11px; color:var(--text-muted);">
+                                        <i class='bx bxs-ambulance'></i>
+                                        <span th:text="${c.arrivalMode != null ? c.arrivalMode.replace('_', ' ') : 'AMBULANCE'}">AMBULANCE</span>
+                                    </div>
+                                </td>
+
+                                <!-- Clinical Vitals Strip -->
+                                <td>
+                                    <div style="display:flex; flex-direction:column; gap:4px; font-size:11.5px;">
+                                        <div style="display:flex; gap:10px;">
+                                            <span title="Blood Pressure" style="font-weight:700;">
+                                                <i class='bx bx-droplet text-danger'></i> <span th:text="${c.bloodPressure != null ? c.bloodPressure : '--/--'}">85/50</span>
+                                            </span>
+                                            <span title="Heart Rate" style="font-weight:700;">
+                                                <i class='bx bx-heart text-warning'></i> <span th:text="${c.heartRate != null ? c.heartRate + ' bpm' : '--'}">128 bpm</span>
+                                            </span>
+                                        </div>
+                                        <div style="display:flex; gap:10px;">
+                                            <span title="SpO2 Oxygen" style="font-weight:700;">
+                                                <i class='bx bx-wind text-info'></i> <span th:text="${c.oxygenSaturation != null ? c.oxygenSaturation + '%' : '--%'}">88%</span>
+                                            </span>
+                                            <span th:if="${c.glasgowComaScale != null}" title="GCS Score" style="font-weight:700; color:#ec4899;">
+                                                GCS: <span th:text="${c.glasgowComaScale}">8</span>/15
+                                            </span>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Chief Complaint -->
+                                <td style="max-width:240px;">
+                                    <span class="badge" style="background:rgba(255,255,255,0.08); font-size:10px; margin-bottom:4px;" th:text="${c.incidentType != null ? c.incidentType.replace('_', ' ') : 'GENERAL ACUTE'}">
+                                        TRAUMA ACCIDENT
+                                    </span>
+                                    <div style="font-size:12px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;" 
+                                         th:text="${c.chiefComplaint}">
+                                        Severe polytrauma following road traffic collision.
+                                    </div>
+                                </td>
+
+                                <!-- ER Status -->
+                                <td>
+                                    <span class="badge" th:classappend="${c.statusBadgeClass}" th:text="${c.statusDisplayName}">
+                                        In Resuscitation
+                                    </span>
+                                    <div th:if="${c.assignedDoctor != null}" style="font-size:11px; color:var(--text-muted); margin-top:4px;">
+                                        <i class='bx bx-user-pin'></i> Dr. <span th:text="${c.assignedDoctor.fullName}">Sharma</span>
+                                    </div>
+                                </td>
+
+                                <!-- Actions -->
+                                <td style="text-align:right;">
+                                    <div style="display:inline-flex; gap:6px;">
+                                        <a th:href="@{/emergency/case/{id}(id=${c.id})}" class="btn btn-sm btn-primary" title="Clinical Monitor &amp; Treatment">
+                                            <i class='bx bx-show-alt'></i> Monitor
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

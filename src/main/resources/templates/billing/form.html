@@ -3,7 +3,7 @@
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
-        <div class="page-header">
+        <div class="page-header billing-hero">
             <h1><i class='bx bxs-receipt mr-1'></i> <span th:text="${bill.id != null} ? 'Edit Bill' : 'Create Bill'">New Bill</span></h1>
             <div class="page-actions"><a th:href="@{/billing}" class="btn btn-outline"><i class='bx bx-arrow-back'></i> Back</a></div>
         </div>
@@ -15,7 +15,7 @@
                         <div class="form-group"><label>Patient *</label>
                             <select name="patientId" class="form-control" required>
                                 <option value="">Select Patient</option>
-                                <option th:each="p : ${patients}" th:value="${p.id}" th:text="${p.fullName}" th:selected="${bill.patient != null and bill.patient.id == p.id}">Patient</option>
+                                <option th:each="p : ${patients}" th:value="${p.id}" th:text="${p.fullName + ' (' + p.patientId + ')'}" th:selected="${(bill.patient != null and bill.patient.id == p.id) or (selectedPatientId != null and selectedPatientId == p.id)}">Patient</option>
                             </select>
                         </div>
                         <div class="form-group"><label>Payment Method</label>

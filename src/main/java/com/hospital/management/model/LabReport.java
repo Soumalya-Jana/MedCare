@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 /**
- * Entity representing a lab report/test result for a patient.
+ * Entity representing a lab report/test result for a patient,
+ * with medical record and diagnostic scan file attachment support.
  */
 @Entity
 @Table(name = "lab_reports")
@@ -47,12 +48,28 @@ public class LabReport {
 
     private LocalDateTime reportDate;
 
+    // --- File Attachment & Medical Records ---
+    @Column(length = 255)
+    private String attachmentFileName;
+
+    @Column(length = 100)
+    private String attachmentFileType;
+
+    @Column(length = 500)
+    private String attachmentFilePath;
+
+    private Long attachmentFileSize;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
     public LabReport() {}
 
-    public LabReport(Long id, Patient patient, Doctor doctor, String testName, String testCategory, String result, String normalRange, String remarks, Double cost, String status, LocalDateTime testDate, LocalDateTime reportDate, LocalDateTime createdAt) {
+    public LabReport(Long id, Patient patient, Doctor doctor, String testName, String testCategory,
+                     String result, String normalRange, String remarks, Double cost, String status,
+                     LocalDateTime testDate, LocalDateTime reportDate, String attachmentFileName,
+                     String attachmentFileType, String attachmentFilePath, Long attachmentFileSize,
+                     LocalDateTime createdAt) {
         this.id = id;
         this.patient = patient;
         this.doctor = doctor;
@@ -65,6 +82,10 @@ public class LabReport {
         this.status = status != null ? status : "Pending";
         this.testDate = testDate;
         this.reportDate = reportDate;
+        this.attachmentFileName = attachmentFileName;
+        this.attachmentFileType = attachmentFileType;
+        this.attachmentFilePath = attachmentFilePath;
+        this.attachmentFileSize = attachmentFileSize;
         this.createdAt = createdAt;
     }
 
@@ -85,6 +106,10 @@ public class LabReport {
         private String status = "Pending";
         private LocalDateTime testDate;
         private LocalDateTime reportDate;
+        private String attachmentFileName;
+        private String attachmentFileType;
+        private String attachmentFilePath;
+        private Long attachmentFileSize;
         private LocalDateTime createdAt;
 
         public LabReportBuilder id(Long id) { this.id = id; return this; }
@@ -99,10 +124,16 @@ public class LabReport {
         public LabReportBuilder status(String status) { this.status = status; return this; }
         public LabReportBuilder testDate(LocalDateTime testDate) { this.testDate = testDate; return this; }
         public LabReportBuilder reportDate(LocalDateTime reportDate) { this.reportDate = reportDate; return this; }
+        public LabReportBuilder attachmentFileName(String attachmentFileName) { this.attachmentFileName = attachmentFileName; return this; }
+        public LabReportBuilder attachmentFileType(String attachmentFileType) { this.attachmentFileType = attachmentFileType; return this; }
+        public LabReportBuilder attachmentFilePath(String attachmentFilePath) { this.attachmentFilePath = attachmentFilePath; return this; }
+        public LabReportBuilder attachmentFileSize(Long attachmentFileSize) { this.attachmentFileSize = attachmentFileSize; return this; }
         public LabReportBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
 
         public LabReport build() {
-            return new LabReport(id, patient, doctor, testName, testCategory, result, normalRange, remarks, cost, status, testDate, reportDate, createdAt);
+            return new LabReport(id, patient, doctor, testName, testCategory, result, normalRange,
+                    remarks, cost, status, testDate, reportDate, attachmentFileName, attachmentFileType,
+                    attachmentFilePath, attachmentFileSize, createdAt);
         }
     }
 
@@ -112,6 +143,46 @@ public class LabReport {
         if (testDate == null) {
             testDate = LocalDateTime.now();
         }
+    }
+
+    // Helper Methods
+    public boolean hasAttachment() {
+        return attachmentFilePath != null && !attachmentFilePath.trim().isEmpty();
+    }
+
+    public boolean isImageAttachment() {
+        if (attachmentFileType != null && attachmentFileType.toLowerCase().startsWith("image/")) {
+            return true;
+        }
+        if (attachmentFileName != null) {
+            String lower = attachmentFileName.toLowerCase();
+            return lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") ||
+                   lower.endsWith(".gif") || lower.endsWith(".webp");
+        }
+        return false;
+    }
+
+    public boolean isPdfAttachment() {
+        if (attachmentFileType != null && attachmentFileType.toLowerCase().contains("pdf")) {
+            return true;
+        }
+        if (attachmentFileName != null) {
+            return attachmentFileName.toLowerCase().endsWith(".pdf");
+        }
+        return false;
+    }
+
+    public String getFormattedFileSize() {
+        if (attachmentFileSize == null || attachmentFileSize <= 0) {
+            return "0 KB";
+        }
+        if (attachmentFileSize < 1024) {
+            return attachmentFileSize + " B";
+        }
+        if (attachmentFileSize < 1024 * 1024) {
+            return String.format("%.1f KB", attachmentFileSize / 1024.0);
+        }
+        return String.format("%.2f MB", attachmentFileSize / (1024.0 * 1024.0));
     }
 
     // Getters and Setters
@@ -139,6 +210,14 @@ public class LabReport {
     public void setTestDate(LocalDateTime testDate) { this.testDate = testDate; }
     public LocalDateTime getReportDate() { return reportDate; }
     public void setReportDate(LocalDateTime reportDate) { this.reportDate = reportDate; }
+    public String getAttachmentFileName() { return attachmentFileName; }
+    public void setAttachmentFileName(String attachmentFileName) { this.attachmentFileName = attachmentFileName; }
+    public String getAttachmentFileType() { return attachmentFileType; }
+    public void setAttachmentFileType(String attachmentFileType) { this.attachmentFileType = attachmentFileType; }
+    public String getAttachmentFilePath() { return attachmentFilePath; }
+    public void setAttachmentFilePath(String attachmentFilePath) { this.attachmentFilePath = attachmentFilePath; }
+    public Long getAttachmentFileSize() { return attachmentFileSize; }
+    public void setAttachmentFileSize(Long attachmentFileSize) { this.attachmentFileSize = attachmentFileSize; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

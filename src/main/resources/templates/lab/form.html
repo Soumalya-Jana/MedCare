@@ -3,10 +3,10 @@
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
-        <div class="page-header">
+        <div class="page-header lab-hero">
             <div>
                 <h1 th:text="${report.id != null ? 'Edit Lab Report' : 'New Lab Test Request'}">Lab Test Request</h1>
-                <p class="text-muted" style="margin-top:4px;">Record test parameters, diagnostic readings, and reference ranges</p>
+                <p class="text-muted" style="margin-top:4px;">Record test parameters, diagnostic readings, reference ranges, and upload medical scans</p>
             </div>
             <div class="page-actions">
                 <a th:href="@{/lab}" class="btn btn-outline">
@@ -22,7 +22,7 @@
                 </h2>
             </div>
             <div class="card-body">
-                <form th:action="@{/lab/save}" method="post">
+                <form th:action="@{/lab/save}" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="id" th:value="${report.id}">
 
                     <div class="form-row">
@@ -33,7 +33,7 @@
                                 <option th:each="p : ${patients}"
                                         th:value="${p.id}"
                                         th:text="${p.fullName} + ' (' + ${p.patientId} + ')'"
-                                        th:selected="${report.patient != null && report.patient.id == p.id}">
+                                        th:selected="${(report.patient != null && report.patient.id == p.id) || (selectedPatientId != null && selectedPatientId == p.id)}">
                                     John Doe (PID-1001)
                                 </option>
                             </select>
@@ -46,7 +46,7 @@
                                 <option th:each="d : ${doctors}"
                                         th:value="${d.id}"
                                         th:text="'Dr. ' + ${d.fullName} + ' (' + ${d.specialization} + ')'"
-                                        th:selected="${report.doctor != null && report.doctor.id == d.id}">
+                                        th:selected="${(report.doctor != null && report.doctor.id == d.id) || (selectedDoctorId != null && selectedDoctorId == d.id)}">
                                     Dr. Sharma (Cardiology)
                                 </option>
                             </select>
@@ -115,6 +115,46 @@
                         <textarea id="remarks" name="remarks" rows="2" class="form-control"
                                   placeholder="Any clinical remarks, caveats, or follow-up advice..."
                                   th:text="${report.remarks}"></textarea>
+                    </div>
+
+                    <!-- Medical Record & Diagnostic Scan File Attachment -->
+                    <div style="background:var(--bg-glass); border:1px solid var(--border); border-radius:12px; padding:20px; margin-top:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <label class="form-label" style="font-weight:700; margin:0; display:flex; align-items:center; gap:8px;">
+                                <i class='bx bx-paperclip text-primary' style="font-size:18px;"></i> Diagnostic Scan / Medical Document Attachment
+                            </label>
+                            <span class="badge badge-info" style="font-size:11px;">Max 10MB</span>
+                        </div>
+
+                        <!-- Existing Attachment Preview if present -->
+                        <div th:if="${report.hasAttachment()}" style="margin-bottom:16px; padding:12px 16px; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <i th:class="${report.isImageAttachment() ? 'bx bx-image text-primary' : (report.isPdfAttachment() ? 'bx bxs-file-pdf text-danger' : 'bx bx-file text-primary')}" style="font-size:28px;"></i>
+                                <div>
+                                    <div style="font-weight:600; color:var(--text-primary);" th:text="${report.attachmentFileName}">scan.jpg</div>
+                                    <div style="font-size:12px; color:var(--text-muted);">
+                                        <span th:text="${report.getFormattedFileSize()}">1.2 MB</span> &bull; 
+                                        <a th:href="@{/lab/attachment/{id}(id=${report.id})}" target="_blank" style="color:var(--primary); text-decoration:none;">Preview current file</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--danger); cursor:pointer;">
+                                    <input type="checkbox" name="removeAttachment" value="true">
+                                    <i class='bx bx-trash'></i> Remove existing file
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:6px;">
+                            <label class="form-label" for="attachment" style="font-size:13px; color:var(--text-secondary);">
+                                <span th:text="${report.hasAttachment() ? 'Replace Attachment (optional):' : 'Upload Diagnostic File / Imaging Scan:'}">Upload Attachment:</span>
+                            </label>
+                            <input type="file" id="attachment" name="attachment" accept="image/*,.pdf,.txt,.dcm,.dicom" class="form-control" style="padding:8px 12px; background:var(--bg-card);">
+                            <small class="text-muted" style="display:block; margin-top:6px;">
+                                Supported formats: Medical radiographs &amp; scans (JPG, PNG, WEBP, DICOM) or Laboratory PDF diagnostic sheets.
+                            </small>
+                        </div>
                     </div>
 
                     <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">

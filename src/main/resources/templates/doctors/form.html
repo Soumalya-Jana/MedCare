@@ -3,7 +3,7 @@
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
-        <div class="page-header">
+        <div class="page-header doctor-hero">
             <h1><i class='bx bxs-user-badge mr-1'></i> <span th:text="${doctor.id != null} ? 'Edit Doctor' : 'Add New Doctor'">New Doctor</span></h1>
             <div class="page-actions">
                 <a th:href="@{/doctors}" class="btn btn-outline"><i class='bx bx-arrow-back'></i> Back</a>

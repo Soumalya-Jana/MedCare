@@ -3,12 +3,15 @@
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
-        <div class="page-header">
+        <div class="page-header lab-hero">
             <div>
                 <h1><i class='bx bxs-flask mr-1'></i> Diagnostic Lab Report</h1>
                 <p class="text-muted" style="margin-top:4px;">Detailed clinical pathology &amp; diagnostic investigation sheet</p>
             </div>
             <div class="page-actions">
+                <a th:if="${report.hasAttachment()}" th:href="@{/lab/download/{id}(id=${report.id})}" class="btn btn-outline" title="Download Attached File">
+                    <i class='bx bx-download'></i> Download Scan
+                </a>
                 <button onclick="window.print()" class="btn btn-outline">
                     <i class='bx bx-printer'></i> Print Report
                 </button>
@@ -21,7 +24,7 @@
             </div>
         </div>
 
-        <div class="card" style="max-width: 900px; margin: 0 auto;">
+        <div class="card" style="max-width: 920px; margin: 0 auto;">
             <!-- Header section of the report -->
             <div class="card-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
                 <div>
@@ -34,7 +37,10 @@
                 <div style="text-align:right;">
                     <div style="font-size:12px; color:var(--text-muted);">REPORT REF:</div>
                     <div style="font-size:1.1rem; font-weight:700; color:var(--primary);" th:text="'LAB-' + ${report.id}">LAB-1</div>
-                    <div style="margin-top:6px;">
+                    <div style="margin-top:6px; display:flex; gap:6px; justify-content:flex-end; align-items:center;">
+                        <span th:if="${report.hasAttachment()}" class="badge badge-info" style="font-size:11px;">
+                            <i class='bx bx-paperclip'></i> Attached
+                        </span>
                         <span th:if="${report.status == 'Completed'}" class="badge badge-available">
                             <i class='bx bx-check-circle'></i> Completed
                         </span>
@@ -53,7 +59,9 @@
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:20px; padding:16px; background:var(--bg-glass); border:1px solid var(--border); border-radius:10px; margin-bottom:24px;">
                     <div>
                         <div class="text-muted" style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Patient Information</div>
-                        <div style="font-size:1.1rem; font-weight:700; margin-top:4px;" th:text="${report.patient.fullName}">Patient Name</div>
+                        <div style="font-size:1.1rem; font-weight:700; margin-top:4px;">
+                            <a th:href="@{/patients/view/{id}(id=${report.patient.id})}" style="color:var(--text-primary); text-decoration:none;" th:text="${report.patient.fullName}">Patient Name</a>
+                        </div>
                         <div style="font-size:13px; color:var(--text-muted); margin-top:2px;">
                             <span th:text="'ID: ' + ${report.patient.patientId}">PID-1001</span> | 
                             <span th:text="${report.patient.gender}">Male</span>, 
@@ -124,6 +132,134 @@
                              th:text="${report.remarks}">
                             Remarks
                         </div>
+                    </div>
+                </div>
+
+                <!-- CLINICAL IMAGING & MEDICAL RECORDS ATTACHMENT SECTION -->
+                <div style="margin-top:30px; margin-bottom:24px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:16px;">
+                        <h3 style="font-size:1rem; margin:0; display:flex; align-items:center; gap:8px;">
+                            <i class='bx bx-images text-primary'></i> Clinical Imaging &amp; Diagnostic Attachments
+                        </h3>
+                        <span th:if="${report.hasAttachment()}" class="badge badge-info" th:text="${report.getFormattedFileSize()}">1.2 MB</span>
+                    </div>
+
+                    <!-- 1. IMAGE ATTACHMENT VIEWER (e.g. X-Ray, CT, MRI, Ultrasound) -->
+                    <div th:if="${report.hasAttachment() and report.isImageAttachment()}"
+                         style="background:#0a0d14; border:1px solid var(--border); border-radius:12px; padding:20px; text-align:center; position:relative; overflow:hidden;">
+                        <!-- Scan header banner -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.1);">
+                            <div style="display:flex; align-items:center; gap:8px; text-align:left;">
+                                <i class='bx bx-film' style="color:#00d2ff; font-size:22px;"></i>
+                                <div>
+                                    <div style="font-size:13px; font-weight:700; color:#fff;" th:text="${report.attachmentFileName}">chest_xray.jpg</div>
+                                    <div style="font-size:11px; color:#8892b0;" th:text="${report.testCategory} + ' Radiography &bull; ' + ${report.getFormattedFileSize()}">Radiology</div>
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:8px;">
+                                <a th:href="@{/lab/attachment/{id}(id=${report.id})}" target="_blank" class="btn btn-sm btn-outline" style="color:#fff; border-color:rgba(255,255,255,0.2);" title="Open full-resolution image in new tab">
+                                    <i class='bx bx-fullscreen'></i> Full View
+                                </a>
+                                <a th:href="@{/lab/download/{id}(id=${report.id})}" class="btn btn-sm btn-primary" title="Download image file">
+                                    <i class='bx bx-download'></i> Download
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Image Preview Frame -->
+                        <div style="position:relative; max-width:680px; margin:0 auto; border-radius:8px; overflow:hidden; background:#000; box-shadow:0 8px 30px rgba(0,0,0,0.6); border:1px solid #222;">
+                            <a th:href="@{/lab/attachment/{id}(id=${report.id})}" target="_blank" title="Click to view full size">
+                                <img th:src="@{/lab/attachment/{id}(id=${report.id})}"
+                                     th:alt="${report.testName}"
+                                     style="max-width:100%; height:auto; max-height:480px; object-fit:contain; display:block; margin:0 auto; cursor:zoom-in;">
+                            </a>
+                        </div>
+                        <div style="margin-top:10px; font-size:11px; color:#8892b0;">
+                            <i class='bx bx-zoom-in mr-1'></i> Click image to open high-resolution radiographic scan in a dedicated viewer tab.
+                        </div>
+
+                        <!-- Inline Remove / Replace Actions -->
+                        <div style="margin-top:16px; padding-top:12px; border-top:1px dashed rgba(255,255,255,0.1); display:flex; justify-content:flex-end; gap:10px;">
+                            <form th:action="@{/lab/remove-attachment/{id}(id=${report.id})}" method="post" onsubmit="return confirm('Are you sure you want to remove this scan attachment?')">
+                                <button type="submit" class="btn btn-sm btn-danger" style="font-size:12px; padding:4px 10px;">
+                                    <i class='bx bx-trash'></i> Remove Attachment
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- 2. PDF ATTACHMENT VIEWER -->
+                    <div th:if="${report.hasAttachment() and report.isPdfAttachment()}"
+                         style="background:var(--bg-glass); border:1px solid var(--border); border-radius:12px; padding:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                            <div style="display:flex; align-items:center; gap:14px;">
+                                <div style="width:48px; height:48px; border-radius:10px; background:rgba(239,68,68,0.15); color:#ef4444; display:flex; align-items:center; justify-content:center; font-size:26px;">
+                                    <i class='bx bxs-file-pdf'></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight:700; font-size:15px; color:var(--text-primary);" th:text="${report.attachmentFileName}">report.pdf</div>
+                                    <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                                        PDF Clinical Dossier &bull; <span th:text="${report.getFormattedFileSize()}">2.4 MB</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:10px;">
+                                <a th:href="@{/lab/attachment/{id}(id=${report.id})}" target="_blank" class="btn btn-sm btn-outline">
+                                    <i class='bx bx-show'></i> View PDF
+                                </a>
+                                <a th:href="@{/lab/download/{id}(id=${report.id})}" class="btn btn-sm btn-primary">
+                                    <i class='bx bx-download'></i> Download PDF
+                                </a>
+                                <form th:action="@{/lab/remove-attachment/{id}(id=${report.id})}" method="post" onsubmit="return confirm('Remove this attached PDF?')">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Remove PDF">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Embedded PDF preview frame -->
+                        <div style="margin-top:16px; border-radius:8px; overflow:hidden; border:1px solid var(--border);">
+                            <iframe th:src="@{/lab/attachment/{id}(id=${report.id})}" style="width:100%; height:420px; border:none; background:#fff;"></iframe>
+                        </div>
+                    </div>
+
+                    <!-- 3. OTHER ATTACHMENT TYPES -->
+                    <div th:if="${report.hasAttachment() and !report.isImageAttachment() and !report.isPdfAttachment()}"
+                         style="background:var(--bg-glass); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; justify-content:space-between; align-items:center;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <i class='bx bx-file text-primary' style="font-size:32px;"></i>
+                            <div>
+                                <div style="font-weight:700;" th:text="${report.attachmentFileName}">file.dat</div>
+                                <div style="font-size:12px; color:var(--text-muted);" th:text="${report.getFormattedFileSize()}">1.0 MB</div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <a th:href="@{/lab/download/{id}(id=${report.id})}" class="btn btn-sm btn-primary">
+                                <i class='bx bx-download'></i> Download
+                            </a>
+                            <form th:action="@{/lab/remove-attachment/{id}(id=${report.id})}" method="post" onsubmit="return confirm('Remove attachment?')">
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class='bx bx-trash'></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- 4. NO ATTACHMENT YET: 1-Click Quick Upload Box -->
+                    <div th:if="${!report.hasAttachment()}"
+                         style="background:var(--bg-card); border:2px dashed var(--border); border-radius:12px; padding:24px; text-align:center;">
+                        <div style="font-size:36px; color:var(--text-muted); margin-bottom:8px;">📷</div>
+                        <h4 style="margin:0 0 4px 0; font-size:1rem; color:var(--text-primary);">No Medical Scan Attached</h4>
+                        <p class="text-muted" style="font-size:13px; max-width:480px; margin:0 auto 16px auto;">
+                            Upload diagnostic radiography (Chest X-Ray, Brain MRI, CT, Ultrasound) or clinical pathology PDF report to attach directly to this investigation.
+                        </p>
+                        <form th:action="@{/lab/quick-upload/{id}(id=${report.id})}" method="post" enctype="multipart/form-data" style="max-width:420px; margin:0 auto; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+                            <input type="file" name="attachment" accept="image/*,.pdf,.txt,.dcm,.dicom" class="form-control" style="flex:1; min-width:220px;" required>
+                            <button type="submit" class="btn btn-primary">
+                                <i class='bx bx-upload'></i> Upload Scan
+                            </button>
+                        </form>
                     </div>
                 </div>
 

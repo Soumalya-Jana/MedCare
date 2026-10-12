@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head}">
+</head>
+<body>
+<div th:replace="~{layout :: layout(~{::content})}">
+    <div th:fragment="content">
+
+        <!-- Top Actions Bar (Hidden on Print) -->
+        <div class="page-header bed-hero d-print-none">
+            <div>
+                <h1><i class='bx bxs-file-doc mr-1 text-primary'></i> Inpatient Discharge Summary</h1>
+                <p class="text-muted" style="margin-top:4px;">Official hospital medical discharge summary &amp; inpatient clearance certificate</p>
+            </div>
+            <div class="page-actions" style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class='bx bx-printer'></i> Print Discharge Slip
+                </button>
+                <a th:if="${bill != null}" th:href="@{/billing/view/{id}(id=${bill.id})}" class="btn btn-outline">
+                    <i class='bx bxs-receipt'></i> View Hospital Invoice
+                </a>
+                <a th:href="@{/patients/view/{id}(id=${patient.id})}" class="btn btn-outline">
+                    <i class='bx bxs-user-detail'></i> Patient 360° Profile
+                </a>
+                <a th:href="@{/beds}" class="btn btn-outline">
+                    <i class='bx bx-arrow-back'></i> Beds Directory
+                </a>
+            </div>
+        </div>
+
+        <!-- Printable Document Container -->
+        <div class="printable-document card" style="max-width: 900px; margin: 0 auto; background: var(--bg-card); padding: 40px; box-shadow: var(--shadow-lg); border-radius: 12px;">
+
+            <!-- Hospital Header Banner -->
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:24px; border-bottom: 2px solid var(--border-color);">
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <div style="width:48px; height:48px; border-radius:10px; background:var(--gradient-primary); display:flex; align-items:center; justify-content:center; color:#fff; font-size:24px;">
+                        <i class='bx bx-plus-medical'></i>
+                    </div>
+                    <div>
+                        <h2 style="font-size:1.45rem; font-weight:800; margin:0; letter-spacing:-0.5px;">MEDCARE HOSPITAL &amp; RESEARCH CENTRE</h2>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                            Department of Inpatient Services &bull; NABH Accredited Multi-Speciality Hospital &bull; Reg: MC-2024-WB
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <div class="badge badge-active" style="font-size:11px; padding:6px 12px; text-transform:uppercase; letter-spacing:0.8px;">
+                        Clinical Discharge Record
+                    </div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">
+                        Ref: <strong style="color:var(--text-primary); font-family:monospace;" th:text="'DS-' + ${admission.id}">DS-1001</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Title Heading -->
+            <div style="text-align:center; margin: 24px 0 20px 0;">
+                <h3 style="font-size:1.15rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; margin:0; color:var(--text-primary);">
+                    INPATIENT MEDICAL DISCHARGE SUMMARY &amp; CLEARANCE
+                </h3>
+            </div>
+
+            <!-- Patient Demographics & Identification Grid -->
+            <div style="background:var(--bg-body); border:1px solid var(--border-color); border-radius:8px; padding:16px 20px; margin-bottom:24px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px;">
+                    <div>
+                        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:700;">Patient Name</div>
+                        <div style="font-size:15px; font-weight:700; color:var(--text-primary); margin-top:2px;" th:text="${patient.fullName}">Patient Full Name</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:700;">Hospital ID / PID</div>
+                        <div style="font-size:14px; font-weight:700; font-family:monospace; color:var(--primary); margin-top:2px;" th:text="${patient.patientId}">PID-0001</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:700;">Age / Gender</div>
+                        <div style="font-size:13.5px; margin-top:2px;">
+                            <span th:text="${patient.age} + ' Years'">35 Years</span> / <span th:text="${patient.gender}">Female</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:700;">Blood Group</div>
+                        <div style="font-size:13.5px; font-weight:700; color:var(--text-primary); margin-top:2px;" th:text="${patient.bloodGroup ?: 'Not Recorded'}">O+</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:700;">Contact Phone</div>
+                        <div style="font-size:13px; margin-top:2px;" th:text="${patient.phone ?: '—'}">+91 98765 43210</div>
+                    </div>
+                    <div>
+                        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:700;">Emergency Contact</div>
+                        <div style="font-size:13px; margin-top:2px;" th:text="${patient.emergencyContactName != null ? patient.emergencyContactName + ' (' + patient.emergencyContactPhone + ')' : '—'}">Contact</div>
+                    </div>
+                </div>
+
+                <!-- Allergy Warning Pill if any -->
+                <div th:if="${patient.allergies != null and !#strings.isEmpty(patient.allergies) and patient.allergies != 'None' and patient.allergies != 'none'}"
+                     style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--border-color); display:flex; align-items:center; gap:8px;">
+                    <i class='bx bxs-error-circle text-red' style="font-size:18px;"></i>
+                    <span style="font-size:12px; font-weight:700; color:var(--danger); text-transform:uppercase;">Known Clinical Allergies:</span>
+                    <strong style="font-size:12.5px; color:var(--text-primary);" th:text="${patient.allergies}">Penicillin</strong>
+                </div>
+            </div>
+
+            <!-- Inpatient Stay Details Table -->
+            <h4 style="font-size:12.5px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:10px;">
+                Hospitalization &amp; Ward Specification
+            </h4>
+            <div class="table-container" style="border: 1px solid var(--border-color); border-radius: 8px; margin-bottom:24px;">
+                <table style="margin:0; font-size:13.5px;">
+                    <tbody>
+                        <tr>
+                            <td style="width:25%; font-weight:600; background:var(--bg-body);">Assigned Ward:</td>
+                            <td style="width:25%;" th:text="${admission.wardName} + ' (' + ${admission.wardType} + ')'">ICU Ward (ICU)</td>
+                            <td style="width:25%; font-weight:600; background:var(--bg-body);">Bed Code / Number:</td>
+                            <td style="width:25%; font-weight:700; color:var(--primary);" th:text="${admission.bedNumber}">ICU-01</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600; background:var(--bg-body);">Admission Date &amp; Time:</td>
+                            <td th:text="${#temporals.format(admission.admissionDate, 'dd MMM yyyy, hh:mm a')}">01 Oct 2026, 10:00 AM</td>
+                            <td style="font-weight:600; background:var(--bg-body);">Discharge Date &amp; Time:</td>
+                            <td th:text="${#temporals.format(admission.dischargeDate, 'dd MMM yyyy, hh:mm a')}">05 Oct 2026, 03:00 PM</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:600; background:var(--bg-body);">Duration of Inpatient Stay:</td>
+                            <td><strong style="color:var(--text-primary);" th:text="${admission.daysStayed} + ' Day(s)'">4 Day(s)</strong></td>
+                            <td style="font-weight:600; background:var(--bg-body);">Attending Physician:</td>
+                            <td th:text="${admission.attendingDoctorName ?: 'Duty Medical Officer'}">Dr. Rajesh Sharma</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Clinical Course & Discharge Findings -->
+            <h4 style="font-size:12.5px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:10px;">
+                Clinical Evaluation &amp; Treatment Summary
+            </h4>
+            <div style="border: 1px solid var(--border-color); border-radius: 8px; padding:18px 20px; margin-bottom:24px;">
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <span style="font-size:12.5px; font-weight:700; color:var(--text-secondary); text-transform:uppercase;">Condition on Discharge:</span>
+                    <span class="badge" th:classappend="${admission.dischargeCondition == 'Recovered / Stable' or admission.dischargeCondition == 'Stable'} ? 'badge-available' : 'badge-maintenance'"
+                          style="font-size:13px; font-weight:700; padding:6px 14px;"
+                          th:text="${admission.dischargeCondition}">Recovered &amp; Stable</span>
+                </div>
+
+                <div style="margin-bottom:14px;">
+                    <div style="font-size:11.5px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:700; margin-bottom:4px;">
+                        Course in Hospital &amp; Interventions Given:
+                    </div>
+                    <div style="font-size:13.5px; color:var(--text-primary); line-height:1.6; white-space:pre-line;"
+                         th:text="${admission.dischargeNotes != null and !#strings.isEmpty(admission.dischargeNotes) ? admission.dischargeNotes : 'Patient was admitted under inpatient observation, treated according to clinical protocol, and monitored until stabilized. Satisfactory clinical recovery observed without post-procedural complications.'}">
+                        Patient course and clinical notes...
+                    </div>
+                </div>
+
+                <div>
+                    <div style="font-size:11.5px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:700; margin-bottom:4px;">
+                        Follow-up Recommendations &amp; Post-Discharge Care:
+                    </div>
+                    <div style="font-size:13.5px; color:var(--text-primary); line-height:1.6; white-space:pre-line;"
+                         th:text="${admission.followUpAdvice != null and !#strings.isEmpty(admission.followUpAdvice) ? admission.followUpAdvice : 'Continue prescribed medications as advised. Maintain adequate hydration and rest. Report back to OPD in 7 days or immediately in case of fever, severe pain, or unexpected clinical deterioration.'}">
+                        Follow-up advice and instructions...
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bed Charges & Financial Clearance Section -->
+            <h4 style="font-size:12.5px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin-bottom:10px;">
+                Inpatient Bed Charges &amp; Financial Settlement
+            </h4>
+            <div style="background:var(--bg-body); border:1px solid var(--border-color); border-radius:8px; padding:16px 20px; margin-bottom:32px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                    <div>
+                        <div style="font-size:13px; color:var(--text-secondary);">
+                            Daily Ward Tariff: <strong th:text="'₹' + ${#numbers.formatDecimal(admission.dailyRate, 1, 2)}">₹1,500.00</strong> &times; <strong th:text="${admission.daysStayed} + ' Days'">4 Days</strong>
+                        </div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top:2px;" th:if="${bill != null}">
+                            Linked Hospital Invoice: <a th:href="@{/billing/view/{id}(id=${bill.id})}" style="font-weight:700; color:var(--primary); text-decoration:none;" th:text="'INV-' + ${bill.id}">INV-1002</a>
+                        </div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top:2px;" th:if="${bill == null}">
+                            Billing Notice: No auto-invoice created during discharge; charges tracked under clinical record.
+                        </div>
+                    </div>
+
+                    <div style="text-align:right;">
+                        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:700;">Total Inpatient Bed Charges</div>
+                        <div style="font-size:1.5rem; font-weight:800; color:var(--text-primary); margin-top:2px;">
+                            ₹<span th:text="${#numbers.formatDecimal(admission.totalRoomCharges, 1, 2)}">6,000.00</span>
+                        </div>
+                        <div th:if="${bill != null}" style="margin-top:4px;">
+                            <span class="badge" th:classappend="${bill.status == 'Paid'} ? 'badge-available' : 'badge-maintenance'"
+                                  th:text="'Invoice Status: ' + ${bill.status}">Invoice Status: Paid</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signatures and Hospital Stamp Section -->
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:20px; text-align:center; padding-top:40px; border-top:1px dashed var(--border-color);">
+                <div>
+                    <div style="border-bottom:1px solid var(--text-muted); width:160px; margin:0 auto 8px auto;"></div>
+                    <div style="font-size:12.5px; font-weight:700; color:var(--text-primary);" th:text="${admission.attendingDoctorName ?: 'Attending Physician'}">Dr. Attending Physician</div>
+                    <div style="font-size:11px; color:var(--text-muted);">Consulting / Attending RMO</div>
+                </div>
+
+                <div>
+                    <div style="border-bottom:1px solid var(--text-muted); width:160px; margin:0 auto 8px auto;"></div>
+                    <div style="font-size:12.5px; font-weight:700; color:var(--text-primary);">Ward In-Charge Nurse</div>
+                    <div style="font-size:11px; color:var(--text-muted);">Nursing &amp; Care Clearance</div>
+                </div>
+
+                <div>
+                    <div style="border-bottom:1px solid var(--text-muted); width:160px; margin:0 auto 8px auto;"></div>
+                    <div style="font-size:12.5px; font-weight:700; color:var(--text-primary);">Billing &amp; Accounts Desk</div>
+                    <div style="font-size:11px; color:var(--text-muted);">Financial Clearance Verified</div>
+                </div>
+            </div>
+
+            <!-- Hospital Footer Note -->
+            <div style="text-align:center; margin-top:32px; font-size:11px; color:var(--text-muted); border-top:1px solid var(--border-color); padding-top:14px;">
+                MedCare Hospital Management System &bull; System generated verified discharge certificate &bull; Emergency 24x7 Helpline: 1800-MED-CARE
+            </div>
+
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

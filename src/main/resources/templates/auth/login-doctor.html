@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle ?: 'Doctor Clinical Portal | MedCare'}">Doctor Clinical Portal | MedCare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('hms-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body class="auth-page role-doctor">
+
+    <!-- Ambient glow -->
+    <div class="auth-ambient-glow" aria-hidden="true"></div>
+
+    <!-- Theme Switcher Top-Right -->
+    <div style="position:fixed; top:20px; right:24px; z-index:100;">
+        <button type="button" class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" title="Switch Light/Dark Theme">
+            <div class="toggle-track">
+                <i class='bx bxs-sun icon-sun'></i>
+                <i class='bx bxs-moon icon-moon'></i>
+                <span class="toggle-thumb"></span>
+            </div>
+        </button>
+    </div>
+
+    <div class="auth-card role-doctor">
+        <!-- Role Switcher Tabs -->
+        <div class="auth-role-switcher">
+            <a th:href="@{/login/admin}" class="auth-role-tab tab-admin">
+                <i class='bx bxs-shield-quarter'></i> Admin
+            </a>
+            <a th:href="@{/login/doctor}" class="auth-role-tab active tab-doctor">
+                <i class='bx bx-plus-medical'></i> Doctor
+            </a>
+            <a th:href="@{/login/receptionist}" class="auth-role-tab tab-receptionist">
+                <i class='bx bxs-id-card'></i> Reception
+            </a>
+        </div>
+
+        <div class="auth-header">
+            <div class="auth-icon-wrap">
+                <i class='bx bx-plus-medical'></i>
+            </div>
+            <div class="auth-role-badge">
+                <i class='bx bx-cross'></i> Attending Physician
+            </div>
+            <h1>Doctor Clinical Portal</h1>
+            <p>Consultations, Prescriptions (Rx), Lab Orders &amp; Wards</p>
+        </div>
+
+        <!-- Success Flash / Registration Success -->
+        <div th:if="${success}" class="alert alert-success">
+            <i class='bx bx-check-circle'></i>
+            <span th:text="${success}">Doctor profile registered.</span>
+        </div>
+        <div th:if="${param.registered}" class="alert alert-success">
+            <i class='bx bx-check-circle'></i>
+            Doctor profile registered successfully! Please sign in to begin clinical practice.
+        </div>
+
+        <!-- Role Mismatch Error -->
+        <div th:if="${param.roleMismatch}" class="alert alert-danger">
+            <i class='bx bx-shield-x'></i>
+            <strong>Access Denied:</strong> This portal is reserved exclusively for Consulting Doctors. Please switch to the Admin or Reception Portal.
+        </div>
+
+        <!-- General Error Message -->
+        <div th:if="${param.error}" class="alert alert-danger">
+            <i class='bx bx-error-circle'></i>
+            Invalid physician username or password. Please try again.
+        </div>
+
+        <!-- Logout Message -->
+        <div th:if="${param.logout}" class="alert alert-success">
+            <i class='bx bx-check-circle'></i>
+            Doctor clinical session signed out securely.
+        </div>
+
+        <form th:action="@{/login}" method="post">
+            <input type="hidden" name="portalRole" value="DOCTOR">
+
+            <div class="auth-input-group">
+                <label for="username">Doctor Username</label>
+                <div class="auth-input-wrapper">
+                    <input type="text" id="username" name="username" class="form-control"
+                           placeholder="Enter doctor username (e.g. dr.sharma)" required autofocus>
+                    <i class='bx bx-user-pin auth-input-icon'></i>
+                </div>
+            </div>
+
+            <div class="auth-input-group">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <label for="password" style="margin:0;">Password</label>
+                    <span style="font-size:11px; color:var(--text-muted);">Doctor credential</span>
+                </div>
+                <div class="auth-input-wrapper">
+                    <input type="password" id="password" name="password" class="form-control"
+                           placeholder="Enter doctor password" required>
+                    <i class='bx bx-lock-alt auth-input-icon'></i>
+                </div>
+            </div>
+
+            <button type="submit" class="auth-submit-btn">
+                <i class='bx bx-log-in'></i>
+                Sign In to Clinical Portal
+            </button>
+        </form>
+
+        <div class="auth-demo-box">
+            <p class="text-muted" style="font-size:12px; margin-bottom:10px; font-weight:600;">
+                Quick Doctor Demo Access:
+            </p>
+            <button type="button" class="btn btn-sm btn-outline w-100" onclick="fillDoctorCredentials()">
+                <i class='bx bx-plus-medical text-success'></i> Autofill Dr. Rajesh Sharma (<code>dr.sharma</code> / <code>doctor123</code>)
+            </button>
+        </div>
+
+        <div class="auth-footer-links">
+            <a th:href="@{/register/doctor}" style="font-weight:600; color:#059669;">
+                <i class='bx bx-user-plus'></i> Register Doctor Profile
+            </a>
+            <a th:href="@{/login}" style="color:var(--text-muted);">
+                <i class='bx bx-grid-alt'></i> All Portals
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function fillDoctorCredentials() {
+            document.getElementById('username').value = 'dr.sharma';
+            document.getElementById('password').value = 'doctor123';
+        }
+    </script>
+    <script th:src="@{/js/theme.js}"></script>
+</body>
+</html>

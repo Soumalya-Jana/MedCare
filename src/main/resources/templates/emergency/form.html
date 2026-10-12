@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head}"></head>
+<body class="emergency-page">
+<div th:replace="~{layout :: layout(~{::content})}">
+    <div th:fragment="content">
+        <!-- Page Header -->
+        <div class="page-header emergency-hero">
+            <div>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                    <span class="badge badge-code-red" style="font-size:11px;">
+                        Emergency Intake
+                    </span>
+                    <span class="badge" style="background:var(--bg-surface-hover); color:var(--text-secondary); border:1px solid var(--border-color); font-size:11px;">
+                        Triage Assessment
+                    </span>
+                </div>
+                <h1>
+                    <i class='bx bxs-ambulance mr-2'></i>
+                    <span>Emergency Patient Intake</span>
+                </h1>
+                <p class="text-muted">
+                    Record arrival presentation, triage priority, vital signs, and bay assignment
+                </p>
+            </div>
+            <div class="page-actions">
+                <a th:href="@{/emergency}" class="btn btn-outline">
+                    <i class='bx bx-arrow-back'></i> Back to Emergency Department
+                </a>
+            </div>
+        </div>
+
+        <form th:action="@{/emergency/intake}" th:object="${emergencyCase}" method="post" id="erIntakeForm">
+            <div style="display:grid; grid-template-columns:2fr 1fr; gap:24px; align-items:start;">
+                
+                <!-- Left Main Column: Patient, Triage & Vitals -->
+                <div style="display:flex; flex-direction:column; gap:24px;">
+
+                    <!-- 1. Triage Priority Selector -->
+                    <div class="card" style="border:1px solid rgba(239, 68, 68, 0.4); box-shadow:0 8px 30px rgba(0,0,0,0.3);">
+                        <div class="card-header" style="background:rgba(239,68,68,0.08); display:flex; justify-content:space-between; align-items:center;">
+                            <div style="font-weight:700; font-size:1.05rem; display:flex; align-items:center; gap:8px;">
+                                <i class='bx bxs-traffic text-danger'></i> 1. Manchester / Emergency Triage Priority Code *
+                            </div>
+                            <span style="font-size:11.5px; color:var(--text-muted);">Standardized 5-Level Clinical Scale</span>
+                        </div>
+                        <div class="card-body">
+                            <input type="hidden" th:field="*{triageLevel}" id="triageLevelInput">
+
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px;">
+                                <!-- Code Red -->
+                                <div class="triage-option-card" onclick="selectTriage('CODE_RED')" id="opt_CODE_RED"
+                                     style="border:2px solid #ef4444; background:rgba(239,68,68,0.14); border-radius:12px; padding:14px; cursor:pointer; text-align:center; transition:all 0.2s;">
+                                    <div style="font-size:24px; color:#ef4444; margin-bottom:4px;"><i class='bx bxs-alarm-exclamation'></i></div>
+                                    <div style="font-weight:800; font-size:13px; color:#fca5a5;">CODE RED</div>
+                                    <div style="font-size:11px; color:#f87171; font-weight:700; margin-top:2px;">Immediate / 0 min</div>
+                                    <div style="font-size:10px; color:var(--text-muted); margin-top:4px;">Resuscitation / Arrest</div>
+                                </div>
+
+                                <!-- Code Orange -->
+                                <div class="triage-option-card" onclick="selectTriage('CODE_ORANGE')" id="opt_CODE_ORANGE"
+                                     style="border:1px solid rgba(249,115,22,0.4); background:rgba(249,115,22,0.06); border-radius:12px; padding:14px; cursor:pointer; text-align:center; transition:all 0.2s;">
+                                    <div style="font-size:24px; color:#f97316; margin-bottom:4px;"><i class='bx bx-pulse'></i></div>
+                                    <div style="font-weight:800; font-size:13px; color:#fdba74;">CODE ORANGE</div>
+                                    <div style="font-size:11px; color:#fb923c; font-weight:700; margin-top:2px;">Very Urgent &lt;10 min</div>
+                                    <div style="font-size:10px; color:var(--text-muted); margin-top:4px;">Severe Distress / Chest Pain</div>
+                                </div>
+
+                                <!-- Code Yellow -->
+                                <div class="triage-option-card" onclick="selectTriage('CODE_YELLOW')" id="opt_CODE_YELLOW"
+                                     style="border:1px solid rgba(234,179,8,0.4); background:rgba(234,179,8,0.06); border-radius:12px; padding:14px; cursor:pointer; text-align:center; transition:all 0.2s;">
+                                    <div style="font-size:24px; color:#eab308; margin-bottom:4px;"><i class='bx bx-error-alt'></i></div>
+                                    <div style="font-weight:800; font-size:13px; color:#fde047;">CODE YELLOW</div>
+                                    <div style="font-size:11px; color:#facc15; font-weight:700; margin-top:2px;">Urgent &lt;30 min</div>
+                                    <div style="font-size:10px; color:var(--text-muted); margin-top:4px;">Fractures / Stable Pain</div>
+                                </div>
+
+                                <!-- Code Green -->
+                                <div class="triage-option-card" onclick="selectTriage('CODE_GREEN')" id="opt_CODE_GREEN"
+                                     style="border:1px solid rgba(16,185,129,0.4); background:rgba(16,185,129,0.06); border-radius:12px; padding:14px; cursor:pointer; text-align:center; transition:all 0.2s;">
+                                    <div style="font-size:24px; color:#10b981; margin-bottom:4px;"><i class='bx bx-check-circle'></i></div>
+                                    <div style="font-weight:800; font-size:13px; color:#86efac;">CODE GREEN</div>
+                                    <div style="font-size:11px; color:#4ade80; font-weight:700; margin-top:2px;">Semi-Urgent &lt;60 min</div>
+                                    <div style="font-size:10px; color:var(--text-muted); margin-top:4px;">Minor Lacerations / Mild</div>
+                                </div>
+
+                                <!-- Code Blue -->
+                                <div class="triage-option-card" onclick="selectTriage('CODE_BLUE')" id="opt_CODE_BLUE"
+                                     style="border:1px solid rgba(59,130,246,0.4); background:rgba(59,130,246,0.06); border-radius:12px; padding:14px; cursor:pointer; text-align:center; transition:all 0.2s;">
+                                    <div style="font-size:24px; color:#3b82f6; margin-bottom:4px;"><i class='bx bx-info-circle'></i></div>
+                                    <div style="font-weight:800; font-size:13px; color:#93c5fd;">CODE BLUE</div>
+                                    <div style="font-size:11px; color:#60a5fa; font-weight:700; margin-top:2px;">Non-Urgent &lt;120 min</div>
+                                    <div style="font-size:10px; color:var(--text-muted); margin-top:4px;">Routine / Dressing Change</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Patient Identification & Demographics -->
+                    <div class="card">
+                        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="font-weight:700; font-size:1.05rem; display:flex; align-items:center; gap:8px;">
+                                <i class='bx bxs-user-detail text-primary'></i> 2. Patient Identification
+                            </div>
+                            <div style="display:flex; gap:8px;">
+                                <button type="button" class="btn btn-sm" id="btnToggleRegistered" onclick="toggleIntakeMode('REGISTERED')"
+                                        style="background:rgba(99,102,241,0.2); color:#818cf8; border:1px solid rgba(99,102,241,0.4);">
+                                    <i class='bx bx-id-card'></i> Existing Patient
+                                </button>
+                                <button type="button" class="btn btn-sm" id="btnToggleUnidentified" onclick="toggleIntakeMode('UNIDENTIFIED')"
+                                        style="background:transparent; color:var(--text-muted); border:1px solid rgba(255,255,255,0.15);">
+                                    <i class='bx bx-ghost'></i> Unknown / Trauma Walk-in
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <input type="hidden" th:field="*{isUnidentified}" id="isUnidentifiedInput">
+
+                            <!-- Registered Patient Dropdown -->
+                            <div id="registeredPatientSection" class="form-group mb-3">
+                                <label style="font-weight:600;"><i class='bx bxs-user'></i> Select from Hospital Patient Registry</label>
+                                <select name="patientId" id="patientSelect" class="form-control" onchange="onPatientSelect(this)">
+                                    <option value="">-- Choose Patient (or switch to Unidentified Trauma mode above) --</option>
+                                    <option th:each="p : ${patients}"
+                                            th:value="${p.id}"
+                                            th:data-name="${p.fullName}"
+                                            th:data-age="${p.age}"
+                                            th:data-gender="${p.gender}"
+                                            th:data-phone="${p.phone}"
+                                            th:text="${p.fullName + ' (' + p.patientId + ' - ' + p.gender + ', ' + p.age + 'y)'}"
+                                            th:selected="${selectedPatientId != null and selectedPatientId == p.id}">
+                                        John Doe (PID-101)
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Unidentified Trauma Banner -->
+                            <div id="unidentifiedAlert" class="alert mb-3" style="display:none; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#fca5a5;">
+                                <i class='bx bxs-alarm-exclamation mr-2' style="font-size:18px;"></i>
+                                <div>
+                                    <strong>Unknown / Unconscious Patient Intake Mode Activated</strong>
+                                    <div style="font-size:12px; margin-top:2px;">A temporary emergency trauma alias will be created until official identification or police inquest.</div>
+                                </div>
+                            </div>
+
+                            <div style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:16px;">
+                                <div class="form-group mb-3">
+                                    <label style="font-weight:600;">Patient / Temporary Alias *</label>
+                                    <input type="text" th:field="*{patientName}" id="patientNameField" class="form-control" required placeholder="Full Name or 'Trauma Male ~35y'">
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label style="font-weight:600;">Estimated Age</label>
+                                    <input type="number" th:field="*{age}" id="ageField" class="form-control" placeholder="Years" min="0" max="130">
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label style="font-weight:600;">Gender</label>
+                                    <select th:field="*{gender}" id="genderField" class="form-control">
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other / Unknown</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                                <div class="form-group mb-3">
+                                    <label style="font-weight:600;">Emergency Contact / Police Officer</label>
+                                    <input type="text" th:field="*{contactPhone}" id="contactField" class="form-control" placeholder="Contact number or PCR Van details">
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label style="font-weight:600;">Trauma Identifier Note</label>
+                                    <input type="text" th:field="*{temporaryIdentifier}" id="tempIdField" class="form-control" placeholder="e.g. Found near Sector 5 crossing, blue jacket">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Clinical Biometrics & Vitals on Arrival -->
+                    <div class="card" style="background:rgba(10,15,28,0.7); border:1px solid rgba(255,255,255,0.1);">
+                        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="font-weight:700; font-size:1.05rem; display:flex; align-items:center; gap:8px;">
+                                <i class='bx bx-pulse text-danger'></i> 3. Clinical Biometrics &amp; Vitals on Arrival
+                            </div>
+                            <span class="badge" style="background:rgba(16,185,129,0.18); color:#34d399; font-size:11px;">
+                                <i class='bx bx-check'></i> Telemetry Synced
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:14px;">
+                                <div class="form-group">
+                                    <label style="font-size:12px; font-weight:700; color:#f87171;"><i class='bx bx-droplet'></i> BP (mmHg)</label>
+                                    <input type="text" th:field="*{bloodPressure}" class="form-control" placeholder="e.g. 120/80">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size:12px; font-weight:700; color:#fb923c;"><i class='bx bx-heart'></i> Heart Rate</label>
+                                    <input type="number" th:field="*{heartRate}" class="form-control" placeholder="bpm">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size:12px; font-weight:700; color:#38bdf8;"><i class='bx bx-wind'></i> SpO2 (%)</label>
+                                    <input type="number" step="0.1" th:field="*{oxygenSaturation}" class="form-control" placeholder="SpO2 %">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size:12px; font-weight:700; color:#a78bfa;"><i class='bx bx-expand'></i> Resp Rate</label>
+                                    <input type="number" th:field="*{respiratoryRate}" class="form-control" placeholder="/min">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size:12px; font-weight:700; color:#f472b6;"><i class='bx bxs-thermometer'></i> Temp (°F)</label>
+                                    <input type="number" step="0.1" th:field="*{temperature}" class="form-control" placeholder="°F">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size:12px; font-weight:700; color:#ec4899;"><i class='bx bx-brain'></i> GCS (3-15)</label>
+                                    <input type="number" min="3" max="15" th:field="*{glasgowComaScale}" class="form-control" placeholder="3-15">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size:12px; font-weight:700; color:#fbbf24;"><i class='bx bx-test-tube'></i> Sugar (mg/dL)</label>
+                                    <input type="number" th:field="*{bloodGlucose}" class="form-control" placeholder="mg/dL">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-size:12px; font-weight:700; color:#f87171;"><i class='bx bx-tachometer'></i> Pain (1-10)</label>
+                                    <input type="number" min="1" max="10" th:field="*{painScore}" class="form-control" placeholder="1-10">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Clinical Notes & Interventions -->
+                    <div class="card">
+                        <div class="card-header" style="font-weight:700; font-size:1.05rem;">
+                            <i class='bx bx-notepad text-primary mr-1'></i> 4. Chief Complaint &amp; Initial Interventions
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group mb-3">
+                                <label style="font-weight:600;">Chief Complaint on Arrival *</label>
+                                <textarea th:field="*{chiefComplaint}" class="form-control" rows="2" required placeholder="Describe acute symptoms, trauma mechanism, time of incident..."></textarea>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label style="font-weight:600;">Triage Assessment Notes</label>
+                                <textarea th:field="*{triageNotes}" class="form-control" rows="2" placeholder="Clinical physical observations, pupil reaction, airway patency, skin color..."></textarea>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label style="font-weight:600;">Immediate Emergency Interventions Administered</label>
+                                <textarea th:field="*{emergencyTreatmentGiven}" class="form-control" rows="2" placeholder="e.g. High-flow O2, 2x 14G IV lines, Ringer's Lactate 1000ml, Intubation, Defibrillation..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Column: Bay, Dispatch, Personnel & Actions -->
+                <div style="display:flex; flex-direction:column; gap:24px;">
+
+                    <!-- Bay & Dispatch Card -->
+                    <div class="card">
+                        <div class="card-header" style="font-weight:700; font-size:1.05rem;">
+                            <i class='bx bxs-bed text-primary mr-1'></i> Bay Allocation &amp; Mode
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group mb-3">
+                                <label style="font-weight:600;">Trauma / ER Bay *</label>
+                                <select th:field="*{bayNumber}" class="form-control" required>
+                                    <option th:each="bay : ${bayPresets}" th:value="${bay}" th:text="${bay}"></option>
+                                </select>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label style="font-weight:600;">Arrival Mode *</label>
+                                <select th:field="*{arrivalMode}" class="form-control" required>
+                                    <option value="AMBULANCE">Ambulance (108 / EMS)</option>
+                                    <option value="WALK_IN">Walk-in / Private Vehicle</option>
+                                    <option value="POLICE">Police / Highway Patrol</option>
+                                    <option value="AIR_AMBULANCE">Air Ambulance / Helipad</option>
+                                    <option value="TRANSFER">Inter-Hospital Transfer</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label style="font-weight:600;">Incident Category *</label>
+                                <select th:field="*{incidentType}" class="form-control" required>
+                                    <option value="TRAUMA_ACCIDENT">Trauma &amp; Accident (RTA / Fall)</option>
+                                    <option value="CARDIAC_ARREST">Cardiac Arrest / Acute MI</option>
+                                    <option value="STROKE_NEURO">Stroke / Neurological</option>
+                                    <option value="RESPIRATORY_DISTRESS">Acute Respiratory Failure</option>
+                                    <option value="POISON_OVERDOSE">Toxicology / Overdose / Snake Bite</option>
+                                    <option value="SURGICAL_ACUTE">Acute Surgical Abdomen / Sepsis</option>
+                                    <option value="BURNS">Burns &amp; Thermal Injury</option>
+                                    <option value="PEDIATRIC_EMERGENCY">Pediatric Emergency</option>
+                                    <option value="GENERAL_ACUTE">General Acute Illness</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label style="font-weight:600;">Assigned On-Call Doctor</label>
+                                <select name="doctorId" class="form-control">
+                                    <option value="">-- Assign Attending ER Physician --</option>
+                                    <option th:each="doc : ${doctors}"
+                                            th:value="${doc.id}"
+                                            th:text="${'Dr. ' + doc.fullName + ' (' + doc.specialization + ')'}">
+                                        Dr. Sharma
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label style="font-weight:600;">Triage Nurse Officer</label>
+                                <input type="text" th:field="*{triageNurse}" class="form-control" placeholder="Nurse Name">
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label style="font-weight:600;">Initial ER Status</label>
+                                <select th:field="*{status}" class="form-control">
+                                    <option value="TRIAGED">Triaged / In Queue</option>
+                                    <option value="IN_RESUSCITATION">In Resuscitation (Active)</option>
+                                    <option value="UNDER_OBSERVATION">Under Observation</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submission Action Card -->
+                    <div class="card">
+                        <div class="card-body">
+                            <button type="submit" class="btn btn-danger btn-block" 
+                                    style="width:100%; padding:12px; font-size:14px; font-weight:700;">
+                                <i class='bx bx-check-circle mr-1'></i> Register Patient &amp; Assign Bay
+                            </button>
+                            <a th:href="@{/emergency}" class="btn btn-outline btn-block mt-2" style="width:100%;">
+                                Cancel
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function selectTriage(code) {
+        document.getElementById('triageLevelInput').value = code;
+        ['CODE_RED', 'CODE_ORANGE', 'CODE_YELLOW', 'CODE_GREEN', 'CODE_BLUE'].forEach(c => {
+            const el = document.getElementById('opt_' + c);
+            if (c === code) {
+                el.style.borderWidth = '2px';
+                el.style.transform = 'scale(1.04)';
+            } else {
+                el.style.borderWidth = '1px';
+                el.style.transform = 'scale(1)';
+            }
+        });
+    }
+
+    function toggleIntakeMode(mode) {
+        const isUnidentified = (mode === 'UNIDENTIFIED');
+        document.getElementById('isUnidentifiedInput').value = isUnidentified;
+        
+        const regSection = document.getElementById('registeredPatientSection');
+        const alertBox = document.getElementById('unidentifiedAlert');
+        const nameField = document.getElementById('patientNameField');
+        const tempIdField = document.getElementById('tempIdField');
+        const btnReg = document.getElementById('btnToggleRegistered');
+        const btnUnid = document.getElementById('btnToggleUnidentified');
+
+        if (isUnidentified) {
+            regSection.style.display = 'none';
+            alertBox.style.display = 'flex';
+            if (!nameField.value || nameField.value.indexOf('Trauma') !== -1) {
+                nameField.value = '[UNIDENTIFIED] Trauma Patient';
+            }
+            if (!tempIdField.value) {
+                tempIdField.value = 'Unconscious trauma intake - ' + new Date().toLocaleTimeString();
+            }
+            btnReg.style.background = 'transparent';
+            btnReg.style.color = 'var(--text-muted)';
+            btnUnid.style.background = 'rgba(239,68,68,0.25)';
+            btnUnid.style.color = '#fca5a5';
+            btnUnid.style.borderColor = 'rgba(239,68,68,0.5)';
+        } else {
+            regSection.style.display = 'block';
+            alertBox.style.display = 'none';
+            btnReg.style.background = 'rgba(99,102,241,0.2)';
+            btnReg.style.color = '#818cf8';
+            btnUnid.style.background = 'transparent';
+            btnUnid.style.color = 'var(--text-muted)';
+            btnUnid.style.borderColor = 'rgba(255,255,255,0.15)';
+        }
+    }
+
+    function onPatientSelect(select) {
+        const opt = select.options[select.selectedIndex];
+        if (opt && opt.value) {
+            document.getElementById('patientNameField').value = opt.getAttribute('data-name') || '';
+            document.getElementById('ageField').value = opt.getAttribute('data-age') || '';
+            document.getElementById('genderField').value = opt.getAttribute('data-gender') || 'Male';
+            document.getElementById('contactField').value = opt.getAttribute('data-phone') || '';
+        }
+    }
+
+    // Initialize with Code Red selected by default
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentCode = document.getElementById('triageLevelInput').value || 'CODE_RED';
+        selectTriage(currentCode);
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout :: head}"></head>
+<body class="emergency-page">
+<div th:replace="~{layout :: layout(~{::content})}">
+    <div th:fragment="content">
+        <!-- Page Header -->
+        <div class="page-header emergency-hero">
+            <div>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                    <span class="badge" th:classappend="${emergencyCase.triageBadgeClass}" 
+                          style="font-size:12px; padding:4px 10px;">
+                        <span th:text="${emergencyCase.triageLevelDisplayName}">Code Red</span>
+                    </span>
+                    <span class="badge" th:classappend="${emergencyCase.statusBadgeClass}" 
+                          style="font-size:12px; padding:4px 10px;" th:text="${emergencyCase.statusDisplayName}">
+                        In Resuscitation
+                    </span>
+                    <span class="er-bay-badge">
+                        <i class='bx bx-bed'></i> <span th:text="${emergencyCase.bayNumber}">Trauma Bay 1</span>
+                    </span>
+                </div>
+                <h1>
+                    <i class='bx bxs-ambulance mr-2' style="color:var(--danger);"></i>
+                    <span th:text="${emergencyCase.patientName}">Patient Name</span>
+                    <span style="font-size:1rem; opacity:0.8; font-weight:400; margin-left:8px;" th:text="'(' + ${emergencyCase.caseNumber} + ')'">#ER-101</span>
+                </h1>
+                <p class="text-muted" style="margin-top:4px;">
+                    Arrived via <strong th:text="${emergencyCase.arrivalMode}">AMBULANCE</strong> at 
+                    <span th:text="${#temporals.format(emergencyCase.arrivalDateTime, 'HH:mm - dd-MMM-yyyy')}">23:05</span>
+                    &bull; Incident: <span class="badge" style="background:var(--bg-surface-hover); color:var(--text-secondary); border:1px solid var(--border-color); font-size:11px;" th:text="${emergencyCase.incidentType.replace('_', ' ')}">TRAUMA</span>
+                </p>
+            </div>
+            <div class="page-actions" style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button type="button" class="btn btn-outline" onclick="openModal('vitalsModal')">
+                    <i class='bx bx-pulse text-danger'></i> Update Vitals &amp; Rx
+                </button>
+                <button th:if="${emergencyCase.isActive()}" type="button" class="btn btn-primary" onclick="openModal('admitModal')">
+                    <i class='bx bxs-bed'></i> Transfer to Ward / ICU
+                </button>
+                <button type="button" class="btn btn-outline" onclick="openModal('statusModal')">
+                    <i class='bx bx-transfer-alt'></i> Update Status
+                </button>
+                <a th:href="@{/emergency}" class="btn btn-outline">
+                    <i class='bx bx-arrow-back'></i> Roster
+                </a>
+            </div>
+        </div>
+
+        <!-- Biometric Telemetry Frame -->
+        <div class="card mb-4">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-weight:700; font-size:1rem; display:flex; align-items:center; gap:8px;">
+                    <i class='bx bx-pulse text-danger'></i> Patient Vital Signs &amp; Clinical Monitoring
+                </div>
+                <div style="font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:12px;">
+                    <span><i class='bx bx-check-circle text-success'></i> Active Observation</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Vitals 8-Grid -->
+                <div class="telemetry-grid">
+                    <!-- BP -->
+                    <div class="telemetry-card" th:classappend="${emergencyCase.bloodPressure != null and (emergencyCase.bloodPressure.startsWith('8') or emergencyCase.bloodPressure.startsWith('7') or emergencyCase.bloodPressure.startsWith('17') or emergencyCase.bloodPressure.startsWith('18'))} ? 'danger' : ''">
+                        <div class="telemetry-label">
+                            <span><i class='bx bx-droplet text-danger'></i> Blood Pressure</span>
+                            <span class="badge" style="font-size:9px; background:rgba(239,68,68,0.2); color:#f87171;">NIBP</span>
+                        </div>
+                        <div class="telemetry-value">
+                            <span th:text="${emergencyCase.bloodPressure != null ? emergencyCase.bloodPressure : '--/--'}">120/80</span>
+                            <span class="telemetry-unit">mmHg</span>
+                        </div>
+                        <div class="telemetry-sub" style="color:var(--text-muted);">Ref: 120/80 mmHg</div>
+                    </div>
+
+                    <!-- Heart Rate -->
+                    <div class="telemetry-card" th:classappend="${emergencyCase.heartRate != null and (emergencyCase.heartRate > 110 or emergencyCase.heartRate < 50)} ? 'danger' : 'warning'">
+                        <div class="telemetry-label">
+                            <span><i class='bx bx-heart text-warning'></i> Heart Rate</span>
+                            <span class="badge" style="font-size:9px; background:var(--warning-light); color:var(--warning-text); border:1px solid var(--warning-border);">Pulse</span>
+                        </div>
+                        <div class="telemetry-value">
+                            <span th:text="${emergencyCase.heartRate != null ? emergencyCase.heartRate : '--'}">128</span>
+                            <span class="telemetry-unit">bpm</span>
+                        </div>
+                        <div class="telemetry-sub" style="color:var(--text-muted);">Ref: 60 - 100 bpm</div>
+                    </div>
+
+                    <!-- SpO2 -->
+                    <div class="telemetry-card" th:classappend="${emergencyCase.oxygenSaturation != null and emergencyCase.oxygenSaturation < 92} ? 'danger' : 'success'">
+                        <div class="telemetry-label">
+                            <span><i class='bx bx-wind text-info'></i> SpO2 Oxygen</span>
+                            <span class="badge" style="font-size:9px; background:rgba(6,182,212,0.2); color:#67e8f9;">PLETH</span>
+                        </div>
+                        <div class="telemetry-value">
+                            <span th:text="${emergencyCase.oxygenSaturation != null ? emergencyCase.oxygenSaturation : '--'}">88.0</span>
+                            <span class="telemetry-unit">%</span>
+                        </div>
+                        <div class="telemetry-sub" style="color:var(--text-muted);">Ref: 95 - 100%</div>
+                    </div>
+
+                    <!-- Resp Rate -->
+                    <div class="telemetry-card" th:classappend="${emergencyCase.respiratoryRate != null and (emergencyCase.respiratoryRate > 24 or emergencyCase.respiratoryRate < 10)} ? 'warning' : ''">
+                        <div class="telemetry-label">
+                            <span><i class='bx bx-expand' style="color:#a78bfa;"></i> Resp Rate</span>
+                            <span class="badge" style="font-size:9px; background:rgba(167,139,250,0.2); color:#c4b5fd;">RR</span>
+                        </div>
+                        <div class="telemetry-value">
+                            <span th:text="${emergencyCase.respiratoryRate != null ? emergencyCase.respiratoryRate : '--'}">30</span>
+                            <span class="telemetry-unit">/min</span>
+                        </div>
+                        <div class="telemetry-sub" style="color:var(--text-muted);">Ref: 12 - 20 /min</div>
+                    </div>
+
+                    <!-- Temperature -->
+                    <div class="telemetry-card">
+                        <div class="telemetry-label">
+                            <span><i class='bx bxs-thermometer' style="color:#f472b6;"></i> Temperature</span>
+                            <span class="badge" style="font-size:9px; background:rgba(244,114,182,0.2); color:#fbcfe8;">TEMP</span>
+                        </div>
+                        <div class="telemetry-value">
+                            <span th:text="${emergencyCase.temperature != null ? emergencyCase.temperature : '--'}">97.4</span>
+                            <span class="telemetry-unit">°F</span>
+                        </div>
+                        <div class="telemetry-sub" style="color:var(--text-muted);">Ref: 98.6°F</div>
+                    </div>
+
+                    <!-- Glasgow Coma Scale -->
+                    <div class="telemetry-card" th:classappend="${emergencyCase.glasgowComaScale != null and emergencyCase.glasgowComaScale <= 8} ? 'danger' : ''">
+                        <div class="telemetry-label">
+                            <span><i class='bx bx-brain' style="color:#ec4899;"></i> GCS Neuro</span>
+                            <span class="badge" style="font-size:9px; background:rgba(236,72,153,0.2); color:#f472b6;">GCS</span>
+                        </div>
+                        <div class="telemetry-value">
+                            <span th:text="${emergencyCase.glasgowComaScale != null ? emergencyCase.glasgowComaScale : '--'}">8</span>
+                            <span class="telemetry-unit">/ 15</span>
+                        </div>
+                        <div class="telemetry-sub">
+                            <span th:if="${emergencyCase.glasgowComaScale != null and emergencyCase.glasgowComaScale <= 8}" style="color:#f87171; font-weight:700;">Severe Coma</span>
+                            <span th:if="${emergencyCase.glasgowComaScale != null and emergencyCase.glasgowComaScale > 8 and emergencyCase.glasgowComaScale <= 12}" style="color:#fb923c;">Moderate</span>
+                            <span th:if="${emergencyCase.glasgowComaScale != null and emergencyCase.glasgowComaScale > 12}" style="color:#4ade80;">Mild / Alert</span>
+                            <span th:if="${emergencyCase.glasgowComaScale == null}" style="color:var(--text-muted);">Scale: 3 - 15</span>
+                        </div>
+                    </div>
+
+                    <!-- Blood Glucose -->
+                    <div class="telemetry-card">
+                        <div class="telemetry-label">
+                            <span><i class='bx bx-test-tube' style="color:#fbbf24;"></i> Blood Sugar</span>
+                            <span class="badge" style="font-size:9px; background:rgba(251,191,36,0.2); color:#fde68a;">GLUC</span>
+                        </div>
+                        <div class="telemetry-value">
+                            <span th:text="${emergencyCase.bloodGlucose != null ? emergencyCase.bloodGlucose : '--'}">110</span>
+                            <span class="telemetry-unit">mg/dL</span>
+                        </div>
+                        <div class="telemetry-sub" style="color:var(--text-muted);">Ref: 70 - 140 mg/dL</div>
+                    </div>
+
+                    <!-- Pain Scale -->
+                    <div class="telemetry-card" th:classappend="${emergencyCase.painScore != null and emergencyCase.painScore >= 7} ? 'danger' : ''">
+                        <div class="telemetry-label">
+                            <span><i class='bx bx-tachometer' style="color:#ef4444;"></i> Pain Score</span>
+                            <span class="badge" style="font-size:9px; background:rgba(239,68,68,0.2); color:#fca5a5;">VAS</span>
+                        </div>
+                        <div class="telemetry-value">
+                            <span th:text="${emergencyCase.painScore != null ? emergencyCase.painScore : '--'}">10</span>
+                            <span class="telemetry-unit">/ 10</span>
+                        </div>
+                        <div class="telemetry-sub">
+                            <span th:if="${emergencyCase.painScore != null and emergencyCase.painScore >= 8}" style="color:#f87171; font-weight:700;">Excruciating Pain</span>
+                            <span th:if="${emergencyCase.painScore != null and emergencyCase.painScore >= 4 and emergencyCase.painScore < 8}" style="color:#fb923c;">Moderate Pain</span>
+                            <span th:if="${emergencyCase.painScore != null and emergencyCase.painScore < 4}" style="color:#4ade80;">Mild Pain</span>
+                            <span th:if="${emergencyCase.painScore == null}" style="color:var(--text-muted);">Scale: 1 - 10</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ECG Waveform Simulation -->
+                <div class="ecg-monitor-frame">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; font-size:11px; color:#10b981; font-family:monospace;">
+                        <span><i class='bx bx-pulse mr-1'></i> LEAD II CONTINUOUS ECG (25mm/s, 10mm/mV)</span>
+                        <span>R-R INTERVAL: 470ms &bull; ST DEV: +0.28mV</span>
+                    </div>
+                    <div class="ecg-grid-backdrop">
+                        <svg viewBox="0 0 600 60" style="width:100%; height:100%;" preserveAspectRatio="none">
+                            <path class="ecg-line" d="M 0 30 L 40 30 L 45 28 L 50 30 L 60 30 L 65 34 L 70 6 L 75 48 L 80 30 L 95 30 L 105 24 L 115 30 L 160 30 L 165 28 L 170 30 L 180 30 L 185 34 L 190 6 L 195 48 L 200 30 L 215 30 L 225 24 L 235 30 L 280 30 L 285 28 L 290 30 L 300 30 L 305 34 L 310 6 L 315 48 L 320 30 L 335 30 L 345 24 L 355 30 L 400 30 L 405 28 L 410 30 L 420 30 L 425 34 L 430 6 L 435 48 L 440 30 L 455 30 L 465 24 L 475 30 L 520 30 L 525 28 L 530 30 L 540 30 L 545 34 L 550 6 L 555 48 L 560 30 L 575 30 L 585 24 L 600 30" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clinical Details & Treatment Columns -->
+        <div style="display:grid; grid-template-columns:1.8fr 1.2fr; gap:24px; align-items:start;">
+
+            <!-- Left: Clinical Assessment & Timeline -->
+            <div style="display:flex; flex-direction:column; gap:24px;">
+
+                <!-- Chief Complaint & Triage Physical Exam -->
+                <div class="card">
+                    <div class="card-header" style="font-weight:700; font-size:1.05rem;">
+                        <i class='bx bx-clipboard text-primary mr-1'></i> Clinical Triage Assessment
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label style="font-weight:700; font-size:12px; color:var(--text-muted); text-transform:uppercase;">Chief Complaint &amp; Mechanism of Injury</label>
+                            <p style="font-size:14px; margin-top:4px; line-height:1.6; color:var(--text-primary);" th:text="${emergencyCase.chiefComplaint}">
+                                Severe polytrauma following high-speed motor vehicle collision.
+                            </p>
+                        </div>
+
+                        <div class="mb-3" th:if="${emergencyCase.triageNotes != null and !emergencyCase.triageNotes.isEmpty()}">
+                            <label style="font-weight:700; font-size:12px; color:var(--text-muted); text-transform:uppercase;">Physical Findings &amp; Triage Assessment</label>
+                            <p style="font-size:13.5px; margin-top:4px; line-height:1.6; color:var(--text-secondary);" th:text="${emergencyCase.triageNotes}">
+                                Flail chest segment noted right anterolateral. Markedly hypotensive on arrival.
+                            </p>
+                        </div>
+
+                        <div th:if="${emergencyCase.temporaryIdentifier != null and !emergencyCase.temporaryIdentifier.isEmpty()}" 
+                             style="padding:10px 14px; background:rgba(239,68,68,0.12); border-left:3px solid #ef4444; border-radius:6px; font-size:13px; color:#fca5a5;">
+                            <strong>Trauma Identification Tag:</strong> <span th:text="${emergencyCase.temporaryIdentifier}">Found near Highway Patrol marker</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Emergency Treatments Administered Timeline -->
+                <div class="card">
+                    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-weight:700; font-size:1.05rem;">
+                            <i class='bx bx-list-plus text-success mr-1'></i> Emergency Interventions &amp; Resuscitation Log
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="openModal('vitalsModal')">
+                            + Log Intervention
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${emergencyCase.emergencyTreatmentGiven == null or emergencyCase.emergencyTreatmentGiven.isEmpty()}" 
+                             style="text-align:center; padding:30px; color:var(--text-muted);">
+                            <i class='bx bx-plus-medical' style="font-size:32px; opacity:0.4; margin-bottom:8px;"></i>
+                            <div>No clinical interventions logged yet. Click "+ Log Intervention" to record medication or resus steps.</div>
+                        </div>
+
+                        <div th:if="${emergencyCase.emergencyTreatmentGiven != null and !emergencyCase.emergencyTreatmentGiven.isEmpty()}" 
+                             style="background:rgba(15,23,42,0.6); padding:16px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); font-family:var(--font-mono, monospace); font-size:13px; line-height:1.8; white-space:pre-wrap; color:#e2e8f0;"
+                             th:text="${emergencyCase.emergencyTreatmentGiven}">
+                            [23:05] Rapid sequence intubation
+                            [23:08] 2x 14G IV lines secured
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inpatient Admission / Disposition Banner (If resolved) -->
+                <div th:if="${!emergencyCase.isActive()}" class="card" style="border:1px solid rgba(16,185,129,0.35); background:linear-gradient(145deg, rgba(16,185,129,0.08) 0%, rgba(15,23,42,0.8) 100%);">
+                    <div class="card-body">
+                        <div style="display:flex; align-items:flex-start; gap:14px;">
+                            <div style="font-size:32px; color:#10b981;"><i class='bx bxs-check-shield'></i></div>
+                            <div>
+                                <h3 style="font-size:1.15rem; margin-bottom:4px; color:#86efac;" th:text="${emergencyCase.disposition != null ? emergencyCase.disposition : 'Case Resolved'}">
+                                    Admitted to ICU Bed #102
+                                </h3>
+                                <p style="font-size:13px; color:var(--text-muted); margin-bottom:6px;" th:if="${emergencyCase.dispositionDateTime != null}">
+                                    Disposition executed at <strong th:text="${#temporals.format(emergencyCase.dispositionDateTime, 'HH:mm - dd-MMM-yyyy')}">23:45</strong>
+                                </p>
+                                <p style="font-size:13.5px; color:var(--text-secondary);" th:text="${emergencyCase.dispositionNotes}">
+                                    Patient transferred directly to Surgical ICU Bed 3 after emergent ultrasound evaluation.
+                                </p>
+                                <div th:if="${emergencyCase.admittedBed != null}" style="margin-top:10px;">
+                                    <a th:href="@{/beds}" class="btn btn-sm btn-outline">
+                                        <i class='bx bxs-bed'></i> View Inpatient Bed Roster
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right: Patient Dossier, Attending Team & Bed Quick-Transfer -->
+            <div style="display:flex; flex-direction:column; gap:24px;">
+
+                <!-- Patient Snapshot Card -->
+                <div class="card">
+                    <div class="card-header" style="font-weight:700; font-size:1.05rem;">
+                        <i class='bx bxs-user-pin text-primary mr-1'></i> Patient Snapshot
+                    </div>
+                    <div class="card-body">
+                        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+                            <div class="user-avatar" style="width:48px; height:48px; font-size:18px; background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);">
+                                <span th:text="${#strings.substring(emergencyCase.patientName, 0, 2).toUpperCase()}">PT</span>
+                            </div>
+                            <div>
+                                <div style="font-weight:800; font-size:1.05rem; color:var(--text-primary);" th:text="${emergencyCase.patientName}">
+                                    Patient Name
+                                </div>
+                                <div style="font-size:12px; color:var(--text-muted);">
+                                    <span th:text="${emergencyCase.gender}">Male</span>, 
+                                    <span th:text="${emergencyCase.age != null ? emergencyCase.age + ' yrs' : 'Age Unspecified'}">35 yrs</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="font-size:12.5px; display:flex; flex-direction:column; gap:8px; border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;">
+                            <div style="display:flex; justify-content:space-between;">
+                                <span class="text-muted">Contact / Police:</span>
+                                <strong th:text="${emergencyCase.contactPhone != null ? emergencyCase.contactPhone : 'N/A'}">+91 98765 43210</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span class="text-muted">Arrival Mode:</span>
+                                <strong th:text="${emergencyCase.arrivalMode}">AMBULANCE</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span class="text-muted">Attending Doctor:</span>
+                                <strong th:text="${emergencyCase.assignedDoctor != null ? 'Dr. ' + emergencyCase.assignedDoctor.fullName : 'On-Call ER Team'}">Dr. Sharma</strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span class="text-muted">Triage Nurse:</span>
+                                <strong th:text="${emergencyCase.triageNurse != null ? emergencyCase.triageNurse : 'ER Triage Desk'}">Nurse Priya</strong>
+                            </div>
+                        </div>
+
+                        <div th:if="${emergencyCase.patient != null}" style="margin-top:16px;">
+                            <a th:href="@{/patients/view/{id}(id=${emergencyCase.patient.id})}" class="btn btn-outline btn-block btn-sm">
+                                <i class='bx bx-folder-open'></i> Open Full Patient 360° Dossier
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rapid Actions Card -->
+                <div class="card" style="border:1px solid rgba(99,102,241,0.3);">
+                    <div class="card-header" style="font-weight:700; font-size:1.05rem;">
+                        <i class='bx bx-zap text-warning mr-1'></i> Emergency Action Desk
+                    </div>
+                    <div class="card-body" style="display:flex; flex-direction:column; gap:10px;">
+                        <button type="button" class="btn btn-primary btn-block" onclick="openModal('admitModal')" th:if="${emergencyCase.isActive()}">
+                            <i class='bx bxs-bed mr-1'></i> Admit to Inpatient ICU / Ward
+                        </button>
+                        <button type="button" class="btn btn-outline btn-block" onclick="openModal('vitalsModal')">
+                            <i class='bx bx-pulse text-danger mr-1'></i> Record Re-Triage Vitals
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-block" onclick="openModal('statusModal')">
+                            <i class='bx bx-transfer mr-1'></i> Transition Status / Discharge
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- MODAL 1: Update Vitals & Interventions -->
+        <div id="vitalsModal" class="modal-backdrop" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:9999; backdrop-filter:blur(6px); align-items:center; justify-content:center;">
+            <div class="card" style="width:90%; max-width:640px; max-height:90vh; overflow-y:auto; border:1px solid rgba(239,68,68,0.4);">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-weight:700; font-size:1.1rem;">
+                        <i class='bx bx-pulse text-danger'></i> Update Vitals &amp; Resuscitation Interventions
+                    </div>
+                    <button type="button" class="btn btn-icon btn-outline btn-sm" onclick="closeModal('vitalsModal')">&times;</button>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/emergency/case/{id}/update-vitals(id=${emergencyCase.id})}" method="post">
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;" class="mb-3">
+                            <div class="form-group">
+                                <label style="font-size:11.5px; font-weight:700;">BP (mmHg)</label>
+                                <input type="text" name="bloodPressure" th:value="${emergencyCase.bloodPressure}" class="form-control" placeholder="120/80">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:11.5px; font-weight:700;">Heart Rate (bpm)</label>
+                                <input type="number" name="heartRate" th:value="${emergencyCase.heartRate}" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:11.5px; font-weight:700;">SpO2 (%)</label>
+                                <input type="number" step="0.1" name="oxygenSaturation" th:value="${emergencyCase.oxygenSaturation}" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:11.5px; font-weight:700;">Resp Rate (/min)</label>
+                                <input type="number" name="respiratoryRate" th:value="${emergencyCase.respiratoryRate}" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:11.5px; font-weight:700;">Temp (°F)</label>
+                                <input type="number" step="0.1" name="temperature" th:value="${emergencyCase.temperature}" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:11.5px; font-weight:700;">GCS (3-15)</label>
+                                <input type="number" min="3" max="15" name="glasgowComaScale" th:value="${emergencyCase.glasgowComaScale}" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:11.5px; font-weight:700;">Blood Sugar</label>
+                                <input type="number" name="bloodGlucose" th:value="${emergencyCase.bloodGlucose}" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:11.5px; font-weight:700;">Pain (1-10)</label>
+                                <input type="number" min="1" max="10" name="painScore" th:value="${emergencyCase.painScore}" class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label style="font-weight:600;">Append New Clinical Intervention / Medication Log</label>
+                            <textarea name="treatmentNotes" class="form-control" rows="3" placeholder="e.g. Infused 500ml Normal Saline, IV Paracetamol 1g, Defibrillated at 200J biphasic..."></textarea>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label style="font-weight:600;">Updated Triage Clinical Assessment</label>
+                            <textarea name="triageNotes" th:text="${emergencyCase.triageNotes}" class="form-control" rows="2"></textarea>
+                        </div>
+
+                        <div style="display:flex; justify-content:flex-end; gap:10px;">
+                            <button type="button" class="btn btn-outline" onclick="closeModal('vitalsModal')">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Save Vitals &amp; Interventions</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL 2: Transfer to Inpatient Ward / ICU -->
+        <div id="admitModal" class="modal-backdrop" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:9999; backdrop-filter:blur(6px); align-items:center; justify-content:center;">
+            <div class="card" style="width:90%; max-width:540px; border:1px solid rgba(99,102,241,0.4);">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-weight:700; font-size:1.1rem;">
+                        <i class='bx bxs-bed text-primary'></i> Direct Transfer to Inpatient Ward / ICU
+                    </div>
+                    <button type="button" class="btn btn-icon btn-outline btn-sm" onclick="closeModal('admitModal')">&times;</button>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/emergency/case/{id}/admit(id=${emergencyCase.id})}" method="post">
+                        <div class="form-group mb-3">
+                            <label style="font-weight:600;">Available Inpatient Bed *</label>
+                            <select name="bedId" class="form-control" required>
+                                <option value="">-- Choose Target Bed --</option>
+                                <option th:each="b : ${availableBeds}" 
+                                        th:value="${b.id}"
+                                        th:text="${b.bedNumber + ' (' + (b.ward != null ? b.ward.wardName + ' - ' + b.ward.wardType : 'General') + ') - ₹' + b.dailyRate + '/day'}">
+                                    Bed 101 (ICU)
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label style="font-weight:600;">Admission Reason &amp; Clinical Orders</label>
+                            <textarea name="admissionReason" class="form-control" rows="3" placeholder="e.g. Critical monitoring post-resuscitation; continuous telemetry; scheduled for urgent surgical exploration..."></textarea>
+                        </div>
+
+                        <div style="display:flex; justify-content:flex-end; gap:10px;">
+                            <button type="button" class="btn btn-outline" onclick="closeModal('admitModal')">Cancel</button>
+                            <button type="submit" class="btn btn-primary" style="background:linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">Confirm Inpatient Transfer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL 3: Update Status / Disposition -->
+        <div id="statusModal" class="modal-backdrop" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:9999; backdrop-filter:blur(6px); align-items:center; justify-content:center;">
+            <div class="card" style="width:90%; max-width:520px; border:1px solid rgba(255,255,255,0.15);">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-weight:700; font-size:1.1rem;">
+                        <i class='bx bx-transfer text-info'></i> Transition Emergency Case Status
+                    </div>
+                    <button type="button" class="btn btn-icon btn-outline btn-sm" onclick="closeModal('statusModal')">&times;</button>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/emergency/case/{id}/update-status(id=${emergencyCase.id})}" method="post">
+                        <div class="form-group mb-3">
+                            <label style="font-weight:600;">New Status *</label>
+                            <select name="status" class="form-control" required>
+                                <option value="IN_RESUSCITATION" th:selected="${emergencyCase.status == 'IN_RESUSCITATION'}">In Resuscitation (Active Bay)</option>
+                                <option value="UNDER_OBSERVATION" th:selected="${emergencyCase.status == 'UNDER_OBSERVATION'}">Under Observation (Observation Bay)</option>
+                                <option value="TRIAGED" th:selected="${emergencyCase.status == 'TRIAGED'}">Triaged / Awaiting Physician</option>
+                                <option value="DISCHARGED_STABLE" th:selected="${emergencyCase.status == 'DISCHARGED_STABLE'}">Discharged Stable (Sent Home)</option>
+                                <option value="TRANSFERRED_OUT" th:selected="${emergencyCase.status == 'TRANSFERRED_OUT'}">Transferred Out (External Tertiary Care)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label style="font-weight:600;">Disposition Summary</label>
+                            <input type="text" name="disposition" th:value="${emergencyCase.disposition}" class="form-control" placeholder="e.g. Discharged Stable with follow-up in 3 days">
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label style="font-weight:600;">Disposition Clinical Notes</label>
+                            <textarea name="dispositionNotes" th:text="${emergencyCase.dispositionNotes}" class="form-control" rows="3" placeholder="Condition at departure, prescription advice, patient escort details..."></textarea>
+                        </div>
+
+                        <div style="display:flex; justify-content:flex-end; gap:10px;">
+                            <button type="button" class="btn btn-outline" onclick="closeModal('statusModal')">Cancel</button>
+                            <button type="submit" class="btn btn-success">Update Status</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function openModal(id) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'flex';
+    }
+
+    function closeModal(id) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    }
+
+    // Close on backdrop click
+    window.addEventListener('click', function(e) {
+        ['vitalsModal', 'admitModal', 'statusModal'].forEach(id => {
+            const m = document.getElementById(id);
+            if (m && e.target === m) m.style.display = 'none';
+        });
+    });
+</script>
+</body>
+</html>

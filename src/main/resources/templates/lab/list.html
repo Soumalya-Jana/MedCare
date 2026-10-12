@@ -1,66 +1,212 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head}"></head>
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
-        <div class="page-header">
+        <!-- Page Header -->
+        <div class="page-header lab-hero">
             <div>
-                <h1><i class='bx bxs-flask mr-1'></i> Laboratory & Diagnostics</h1>
-                <p class="text-muted" style="margin-top:4px;">Manage medical lab tests, diagnostic reports, and patient investigations</p>
+                <h1><i class='bx bxs-flask mr-1'></i> Laboratory &amp; Diagnostics Center</h1>
+                <p class="text-muted" style="margin-top:4px;">Real-time diagnostic investigations, clinical pathology, and specimen testing command center</p>
             </div>
-            <div class="page-actions">
+            <div class="page-actions" style="display:flex; gap:10px;">
                 <a th:href="@{/lab/add}" class="btn btn-primary">
                     <i class='bx bx-plus'></i> New Lab Request
                 </a>
             </div>
         </div>
 
-        <!-- Filter tabs -->
-        <div class="card mb-3" style="padding:12px 20px;">
-            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                <span class="text-muted" style="font-size:13px; font-weight:600;"><i class='bx bx-filter-alt'></i> Status:</span>
-                <a th:href="@{/lab}" class="btn btn-sm" th:classappend="${selectedStatus == null ? 'btn-primary' : 'btn-outline'}">All Reports</a>
-                <a th:href="@{/lab(status='Pending')}" class="btn btn-sm" th:classappend="${selectedStatus == 'Pending' ? 'btn-primary' : 'btn-outline'}">Pending</a>
-                <a th:href="@{/lab(status='In Progress')}" class="btn btn-sm" th:classappend="${selectedStatus == 'In Progress' ? 'btn-primary' : 'btn-outline'}">In Progress</a>
-                <a th:href="@{/lab(status='Completed')}" class="btn btn-sm" th:classappend="${selectedStatus == 'Completed' ? 'btn-primary' : 'btn-outline'}">Completed</a>
+        <!-- Feedback Alerts -->
+        <div th:if="${success}" class="alert alert-success">
+            <i class='bx bx-check-circle'></i>
+            <span th:text="${success}">Operation completed successfully!</span>
+        </div>
+        <div th:if="${error}" class="alert alert-danger">
+            <i class='bx bx-error-circle'></i>
+            <span th:text="${error}">An error occurred!</span>
+        </div>
+
+        <!-- Diagnostic KPI Metric Cards -->
+        <div class="stats-grid mb-4">
+            <div class="stat-card blue">
+                <div class="stat-icon" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">
+                    <i class='bx bxs-flask'></i>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-value" th:text="${totalReports}">0</div>
+                    <div class="stat-label">Total Tests Ordered</div>
+                </div>
+            </div>
+
+            <div class="stat-card orange">
+                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+                    <i class='bx bx-hourglass'></i>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-value" th:text="${pendingCount}">0</div>
+                    <div class="stat-label">Pending Collection</div>
+                </div>
+            </div>
+
+            <div class="stat-card purple">
+                <div class="stat-icon" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
+                    <i class='bx bx-loader-alt'></i>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-value" th:text="${inProgressCount}">0</div>
+                    <div class="stat-label">In-Analysis</div>
+                </div>
+            </div>
+
+            <div class="stat-card green">
+                <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+                    <i class='bx bx-check-shield'></i>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-value" th:text="${completedCount}">0</div>
+                    <div class="stat-label">Reports Finalized</div>
+                </div>
+            </div>
+
+            <div class="stat-card cyan">
+                <div class="stat-icon" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4;">
+                    <i class='bx bx-paperclip'></i>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-value" th:text="${attachmentCount}">0</div>
+                    <div class="stat-label">Scans Attached</div>
+                </div>
             </div>
         </div>
 
+        <!-- Filter & Search Control Bar -->
+        <div class="card mb-4" style="padding: 16px 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                <!-- Search Form -->
+                <form th:action="@{/lab}" method="get" style="display:flex; gap:12px; flex:1; max-width:480px;">
+                    <input type="hidden" name="status" th:if="${selectedStatus != null}" th:value="${selectedStatus}"/>
+                    <input type="hidden" name="category" th:if="${selectedCategory != null}" th:value="${selectedCategory}"/>
+                    <div class="search-input-wrapper" style="flex:1;">
+                        <span class="search-icon"><i class='bx bx-search'></i></span>
+                        <input type="text" name="search" th:value="${search}" placeholder="Search tests, patients, or category..." class="form-control" style="padding-left:42px;">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class='bx bx-filter-alt'></i> Search</button>
+                    <a th:if="${search != null or selectedStatus != null or selectedCategory != null}" th:href="@{/lab}" class="btn btn-outline" title="Reset Filters">
+                        <i class='bx bx-reset'></i> Reset
+                    </a>
+                </form>
+
+                <!-- Status Filter Pills -->
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <span class="text-muted" style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Status:</span>
+                    <a th:href="@{/lab(category=${selectedCategory}, search=${search})}" 
+                       class="btn btn-sm" th:classappend="${selectedStatus == null or selectedStatus == 'ALL'} ? 'btn-primary' : 'btn-outline'">
+                        All <span style="margin-left:4px; opacity:0.8;" th:text="'(' + ${totalReports} + ')'">(0)</span>
+                    </a>
+                    <a th:href="@{/lab(status='Pending', category=${selectedCategory}, search=${search})}" 
+                       class="btn btn-sm" th:classappend="${selectedStatus == 'Pending'} ? 'btn-primary' : 'btn-outline'">
+                        Pending <span style="margin-left:4px; opacity:0.8;" th:text="'(' + ${pendingCount} + ')'">(0)</span>
+                    </a>
+                    <a th:href="@{/lab(status='In Progress', category=${selectedCategory}, search=${search})}" 
+                       class="btn btn-sm" th:classappend="${selectedStatus == 'In Progress'} ? 'btn-primary' : 'btn-outline'">
+                        In Progress <span style="margin-left:4px; opacity:0.8;" th:text="'(' + ${inProgressCount} + ')'">(0)</span>
+                    </a>
+                    <a th:href="@{/lab(status='Completed', category=${selectedCategory}, search=${search})}" 
+                       class="btn btn-sm" th:classappend="${selectedStatus == 'Completed'} ? 'btn-primary' : 'btn-outline'">
+                        Completed <span style="margin-left:4px; opacity:0.8;" th:text="'(' + ${completedCount} + ')'">(0)</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Category Pills Bar -->
+            <div style="margin-top:14px; pt-2; border-top:1px dashed var(--border); padding-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <span class="text-muted" style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">
+                    <i class='bx bx-category'></i> Modality:
+                </span>
+                <a th:href="@{/lab(status=${selectedStatus}, search=${search})}"
+                   class="badge" style="cursor:pointer; text-decoration:none; padding:6px 12px; border-radius:20px; font-size:12px;"
+                   th:styleappend="${selectedCategory == null} ? 'background:var(--primary); color:#fff;' : 'background:var(--bg-glass); color:var(--text-secondary); border:1px solid var(--border);'">
+                    All Categories
+                </a>
+                <a th:each="cat : ${categories}"
+                   th:href="@{/lab(status=${selectedStatus}, category=${cat}, search=${search})}"
+                   class="badge" style="cursor:pointer; text-decoration:none; padding:6px 12px; border-radius:20px; font-size:12px;"
+                   th:styleappend="${selectedCategory == cat} ? 'background:var(--primary); color:#fff;' : 'background:var(--bg-glass); color:var(--text-secondary); border:1px solid var(--border);'"
+                   th:text="${cat}">Blood Test</a>
+            </div>
+        </div>
+
+        <!-- Investigations & Test Registry Table Card -->
         <div class="card">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-weight:700; font-size:1.05rem;">Diagnostic Test Orders</span>
+                    <span class="badge badge-occupied" th:text="${#lists.size(reports)} + ' Tests'">0 Tests</span>
+                </div>
+                <div style="font-size:13px; color:var(--text-muted);">
+                    Total Diagnostic Billable: <strong style="color:var(--primary); font-size:14px;" th:text="'₹' + ${#numbers.formatDecimal(totalRevenue, 1, 2)}">₹0.00</strong>
+                </div>
+            </div>
             <div class="card-body" style="padding:0;">
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>Patient</th>
-                                <th>Test Name</th>
-                                <th>Category</th>
+                                <th style="width:70px;">Order #</th>
+                                <th>Patient Details</th>
+                                <th>Test &amp; Investigation</th>
+                                <th>Modality / Category</th>
                                 <th>Referring Doctor</th>
-                                <th>Cost (₹)</th>
+                                <th>Test Fee (₹)</th>
                                 <th>Status</th>
-                                <th>Date</th>
-                                <th>Actions</th>
+                                <th>Scheduled / Ordered Date</th>
+                                <th style="text-align:right;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="r, stat : ${reports}">
-                                <td th:text="${stat.index + 1}">1</td>
+                            <tr th:each="r : ${reports}">
                                 <td>
-                                    <div style="font-weight:600;" th:text="${r.patient.fullName}">Patient Name</div>
-                                    <small class="text-muted" th:text="${r.patient.patientId}">PID-1001</small>
+                                    <a th:href="@{/lab/view/{id}(id=${r.id})}" style="font-family:monospace; font-weight:700; color:var(--primary);" th:text="'LAB-' + ${r.id}">LAB-1</a>
                                 </td>
                                 <td>
-                                    <span style="font-weight:600;" th:text="${r.testName}">Complete Blood Count</span>
+                                    <a th:href="@{/patients/view/{id}(id=${r.patient.id})}" style="font-weight:600; color:var(--text-primary); text-decoration:none;" th:text="${r.patient.fullName}">Patient Name</a>
+                                    <div style="font-size:12px; color:var(--text-muted); display:flex; gap:6px; align-items:center; margin-top:2px;">
+                                        <span class="badge badge-pending" style="font-size:10px; padding:2px 6px;" th:text="${r.patient.patientId}">PID-1001</span>
+                                        <span th:text="${r.patient.gender} + ', ' + ${r.patient.age} + 'y'">Male, 30y</span>
+                                    </div>
                                 </td>
                                 <td>
-                                    <span class="badge badge-occupied" th:text="${r.testCategory}">Blood Test</span>
+                                    <div style="font-weight:600; color:var(--text-primary); display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                        <span th:text="${r.testName}">Complete Blood Count (CBC)</span>
+                                        <a th:if="${r.hasAttachment()}" th:href="@{/lab/attachment/{id}(id=${r.id})}" target="_blank"
+                                           class="badge badge-info" style="font-size:10px; padding:2px 6px; text-decoration:none;"
+                                           title="Attached Diagnostic Scan / File">
+                                            <i class='bx bx-paperclip'></i> Scan
+                                        </a>
+                                    </div>
+                                    <small class="text-muted" th:if="${r.result != null and !#strings.isEmpty(r.result)}" style="display:block; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                        <i class='bx bx-check'></i> <span th:text="${r.result}">Result recorded</span>
+                                    </small>
                                 </td>
                                 <td>
-                                    <span th:if="${r.doctor != null}" th:text="'Dr. ' + ${r.doctor.fullName}">Dr. Sharma</span>
-                                    <span th:if="${r.doctor == null}" class="text-muted">—</span>
+                                    <span class="badge" 
+                                          th:classappend="${r.testCategory == 'Blood Test' ? 'badge-occupied' : (r.testCategory == 'X-Ray' or r.testCategory == 'CT Scan' or r.testCategory == 'MRI Scan' ? 'badge-maintenance' : 'badge-available')}"
+                                          th:text="${r.testCategory}">Blood Test</span>
                                 </td>
-                                <td style="font-weight:600;" th:text="${#numbers.formatDecimal(r.cost, 1, 2)}">500.00</td>
+                                <td>
+                                    <div th:if="${r.doctor != null}">
+                                        <a th:href="@{/doctors/view/{id}(id=${r.doctor.id})}" style="color:var(--text-primary); font-weight:500; text-decoration:none;">
+                                            <i class='bx bx-plus-medical' style="font-size:11px; color:var(--primary);"></i>
+                                            <span th:text="'Dr. ' + ${r.doctor.fullName}">Dr. Sharma</span>
+                                        </a>
+                                        <div style="font-size:11px; color:var(--text-muted);" th:text="${r.doctor.specialization}">Cardiology</div>
+                                    </div>
+                                    <span th:if="${r.doctor == null}" class="text-muted" style="font-style:italic;">Direct Walk-in</span>
+                                </td>
+                                <td>
+                                    <span style="font-weight:700; color:var(--text-primary);" th:text="'₹' + ${#numbers.formatDecimal(r.cost != null ? r.cost : 0.0, 1, 2)}">₹500.00</span>
+                                </td>
                                 <td>
                                     <span th:if="${r.status == 'Completed'}" class="badge badge-available">
                                         <i class='bx bx-check-circle'></i> Completed
@@ -73,18 +219,22 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <small class="text-muted" th:if="${r.testDate != null}" th:text="${#temporals.format(r.testDate, 'dd MMM yyyy, HH:mm')}">Date</small>
+                                    <div style="font-size:13px; font-weight:500;" th:if="${r.testDate != null}" th:text="${#temporals.format(r.testDate, 'dd MMM yyyy')}">09 Oct 2026</div>
+                                    <div style="font-size:11px; color:var(--text-muted);" th:if="${r.testDate != null}" th:text="${#temporals.format(r.testDate, 'HH:mm a')}">10:30 AM</div>
                                     <small class="text-muted" th:if="${r.testDate == null}">—</small>
                                 </td>
-                                <td>
+                                <td style="text-align:right;">
                                     <div class="btn-group">
-                                        <a th:href="@{/lab/view/{id}(id=${r.id})}" class="btn btn-sm btn-outline" title="View Report">
-                                            <i class='bx bx-show'></i>
+                                        <a th:if="${r.hasAttachment()}" th:href="@{/lab/download/{id}(id=${r.id})}" class="btn btn-sm btn-outline" title="Download Attached Scan / File">
+                                            <i class='bx bx-download'></i>
                                         </a>
-                                        <a th:href="@{/lab/edit/{id}(id=${r.id})}" class="btn btn-sm btn-primary" title="Edit / Update Result">
-                                            <i class='bx bx-edit'></i>
+                                        <a th:href="@{/lab/view/{id}(id=${r.id})}" class="btn btn-sm btn-outline" title="View &amp; Print Diagnostic Sheet">
+                                            <i class='bx bx-file'></i>
                                         </a>
-                                        <a th:href="@{/lab/delete/{id}(id=${r.id})}" class="btn btn-sm btn-danger" onclick="return confirm('Delete this lab report?')" title="Delete">
+                                        <a th:href="@{/lab/edit/{id}(id=${r.id})}" class="btn btn-sm btn-primary" title="Edit Results &amp; Status">
+                                            <i class='bx bx-edit-alt'></i>
+                                        </a>
+                                        <a th:href="@{/lab/delete/{id}(id=${r.id})}" class="btn btn-sm btn-danger" onclick="return confirm('Delete this laboratory investigation record?')" title="Delete Record">
                                             <i class='bx bx-trash'></i>
                                         </a>
                                     </div>
@@ -92,13 +242,18 @@
                             </tr>
                             <tr th:if="${#lists.isEmpty(reports)}">
                                 <td colspan="9">
-                                    <div class="empty-state">
-                                        <div class="empty-icon">🧪</div>
-                                        <h3>No lab reports found</h3>
-                                        <p class="text-muted">Create a new diagnostic lab order to get started</p>
-                                        <a th:href="@{/lab/add}" class="btn btn-primary mt-2">
-                                            <i class='bx bx-plus'></i> New Lab Request
-                                        </a>
+                                    <div class="empty-state" style="padding:48px 20px; text-align:center;">
+                                        <div class="empty-icon" style="font-size:42px; margin-bottom:12px;">🧪</div>
+                                        <h3 style="margin-bottom:6px;">No diagnostic reports found</h3>
+                                        <p class="text-muted" style="margin-bottom:16px;">There are no laboratory orders matching the current filter criteria.</p>
+                                        <div style="display:flex; justify-content:center; gap:10px;">
+                                            <a th:href="@{/lab}" class="btn btn-outline" th:if="${selectedStatus != null or selectedCategory != null or search != null}">
+                                                <i class='bx bx-reset'></i> Clear Filters
+                                            </a>
+                                            <a th:href="@{/lab/add}" class="btn btn-primary">
+                                                <i class='bx bx-plus'></i> New Lab Request
+                                            </a>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>

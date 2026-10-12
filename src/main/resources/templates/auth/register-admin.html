@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle ?: 'Register Administrator | MedCare'}">Register Administrator | MedCare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('hms-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body class="auth-page role-admin">
+
+    <!-- Ambient glow -->
+    <div class="auth-ambient-glow" aria-hidden="true"></div>
+
+    <!-- Theme Switcher Top-Right -->
+    <div style="position:fixed; top:20px; right:24px; z-index:100;">
+        <button type="button" class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" title="Switch Light/Dark Theme">
+            <div class="toggle-track">
+                <i class='bx bxs-sun icon-sun'></i>
+                <i class='bx bxs-moon icon-moon'></i>
+                <span class="toggle-thumb"></span>
+            </div>
+        </button>
+    </div>
+
+    <div class="auth-card auth-card-wide role-admin">
+        <div class="auth-header">
+            <div class="auth-icon-wrap">
+                <i class='bx bxs-shield-plus'></i>
+            </div>
+            <div class="auth-role-badge">
+                <i class='bx bxs-shield'></i> System Administrator
+            </div>
+            <h1>Register Administrator</h1>
+            <p>Setup a new administrative executive account for MedCare Hospital</p>
+        </div>
+
+        <!-- Error & Alert Messages -->
+        <div th:if="${error}" class="alert alert-danger mb-3">
+            <i class='bx bx-error-circle'></i>
+            <span th:text="${error}">Registration error occurred.</span>
+        </div>
+
+        <form th:action="@{/register/admin}" th:object="${adminDto}" method="post">
+            <div class="auth-grid-2">
+                <div class="auth-input-group">
+                    <label for="fullName">Full Legal Name *</label>
+                    <div class="auth-input-wrapper">
+                        <input type="text" id="fullName" th:field="*{fullName}" class="form-control"
+                               placeholder="e.g. Dr. Arthur Vance" required autofocus>
+                        <i class='bx bx-user auth-input-icon'></i>
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="username">Admin Username *</label>
+                    <div class="auth-input-wrapper">
+                        <input type="text" id="username" th:field="*{username}" class="form-control"
+                               placeholder="e.g. admin.vance" required>
+                        <i class='bx bx-at auth-input-icon'></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="auth-grid-2">
+                <div class="auth-input-group">
+                    <label for="email">Work Email Address</label>
+                    <div class="auth-input-wrapper">
+                        <input type="email" id="email" th:field="*{email}" class="form-control"
+                               placeholder="e.g. admin@hospital.com">
+                        <i class='bx bx-envelope auth-input-icon'></i>
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="phone">Contact Mobile Phone</label>
+                    <div class="auth-input-wrapper">
+                        <input type="tel" id="phone" th:field="*{phone}" class="form-control"
+                               placeholder="e.g. +91 98765 43210">
+                        <i class='bx bx-phone auth-input-icon'></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="auth-input-group">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <label for="adminKey" style="margin:0;">Admin Setup Passcode *</label>
+                    <span style="font-size:11.5px; color:var(--primary); font-weight:600;">Passcode: <code>MEDCARE_ADMIN_2026</code></span>
+                </div>
+                <div class="auth-input-wrapper">
+                    <input type="password" id="adminKey" th:field="*{adminKey}" class="form-control"
+                           placeholder="Enter authorized administrator security passcode" required>
+                    <i class='bx bx-key auth-input-icon'></i>
+                </div>
+            </div>
+
+            <div class="auth-grid-2">
+                <div class="auth-input-group">
+                    <label for="password">Create Password *</label>
+                    <div class="auth-input-wrapper">
+                        <input type="password" id="password" th:field="*{password}" class="form-control"
+                               placeholder="Minimum 6 characters" minlength="6" required>
+                        <i class='bx bx-lock-alt auth-input-icon'></i>
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="confirmPassword">Confirm Password *</label>
+                    <div class="auth-input-wrapper">
+                        <input type="password" id="confirmPassword" th:field="*{confirmPassword}" class="form-control"
+                               placeholder="Re-enter password" minlength="6" required>
+                        <i class='bx bx-check-shield auth-input-icon'></i>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="auth-submit-btn">
+                <i class='bx bx-shield-plus'></i>
+                Complete Administrator Registration
+            </button>
+        </form>
+
+        <div class="auth-footer-links" style="margin-top:24px; border-top:1px solid var(--border-color); padding-top:16px;">
+            <span>
+                Already registered?
+                <a th:href="@{/login/admin}" style="font-weight:700;">Sign In to Admin Portal</a>
+            </span>
+            <a th:href="@{/register}" style="color:var(--text-muted);">
+                <i class='bx bx-grid-alt'></i> Register as Doctor / Receptionist
+            </a>
+        </div>
+    </div>
+
+    <script th:src="@{/js/theme.js}"></script>
+</body>
+</html>

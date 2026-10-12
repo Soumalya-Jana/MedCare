@@ -1,51 +1,325 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout :: head}"></head>
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
-        <div class="page-header">
-            <h1><i class='bx bxs-receipt mr-1'></i> Invoice</h1>
-            <div class="page-actions">
-                <button onclick="window.print()" class="btn btn-primary"><i class='bx bx-printer'></i> Print</button>
-                <a th:href="@{/billing}" class="btn btn-outline"><i class='bx bx-arrow-back'></i> Back</a>
+
+        <!-- Page Header & Action Buttons -->
+        <div class="page-header billing-hero d-print-none">
+            <div>
+                <h1><i class='bx bxs-receipt mr-1 text-primary'></i> Hospital Billing Invoice</h1>
+                <p class="text-muted" style="margin-top:4px;">Official patient financial statement &amp; payment receipt</p>
+            </div>
+            <div class="page-actions" style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class='bx bx-printer'></i> Print Invoice
+                </button>
+                <a th:href="@{/billing/edit/{id}(id=${bill.id})}" class="btn btn-outline">
+                    <i class='bx bx-edit'></i> Edit Bill
+                </a>
+                <a th:href="@{/billing}" class="btn btn-outline">
+                    <i class='bx bx-arrow-back'></i> Invoices List
+                </a>
             </div>
         </div>
-        <div class="card invoice-card">
-            <div class="invoice-header">
-                <h2 style="font-size:28px; margin-bottom:4px;">🏥 MedCare HMS</h2>
-                <p class="text-muted">Hospital Management System</p>
-                <p class="text-muted" style="margin-top:12px;">Invoice #<span th:text="${bill.id}">000</span></p>
-                <p class="text-muted">Date: <span th:text="${bill.createdAt}">2026-10-06</span></p>
-            </div>
-            <div class="card-body">
-                <div class="detail-grid mb-3">
-                    <div class="detail-item"><div class="detail-label">Patient</div><div class="detail-value" th:text="${bill.patient.fullName}">-</div></div>
-                    <div class="detail-item"><div class="detail-label">Payment Method</div><div class="detail-value" th:text="${bill.paymentMethod}">-</div></div>
-                    <div class="detail-item"><div class="detail-label">Status</div>
-                        <span class="badge" th:classappend="${bill.status == 'Paid'} ? 'badge-paid' : (${bill.status == 'Partial'} ? 'badge-partial' : 'badge-pending')" th:text="${bill.status}">-</span>
+
+        <!-- Alert messages -->
+        <div th:if="${success}" class="alert alert-success d-print-none">
+            <i class='bx bx-check-circle'></i>
+            <span th:text="${success}">Success</span>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px; align-items:start;" class="invoice-layout-grid">
+
+            <!-- Printable Official Invoice Card -->
+            <div class="card invoice-card" style="margin-bottom:24px; background:var(--bg-surface); border:1px solid var(--border-color); box-shadow:var(--shadow-md); border-radius:12px; overflow:hidden;">
+                
+                <!-- Hospital Header -->
+                <div style="padding: 28px 32px; border-bottom: 2px solid var(--border-color); background: var(--bg-surface-hover);">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:20px;">
+                        <div>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="font-size:28px;">🏥</span>
+                                <div>
+                                    <h2 style="font-size:1.4rem; font-weight:800; color:var(--text-primary); margin:0;">MedCare Multi-Specialty Hospital</h2>
+                                    <p style="font-size:12px; color:var(--text-muted); margin:2px 0 0 0;">Department of Patient Accounts &amp; Financial Services</p>
+                                </div>
+                            </div>
+                            <div style="font-size:12px; color:var(--text-secondary); margin-top:8px; line-height:1.4;">
+                                100 Health Avenue, Medical Enclave | Emergency: +91 (011) 4567-8900<br>
+                                GSTIN / Tax ID: 07AAACH2026M1Z2 &bull; NABH Reg: MED-IND/2026/8942
+                            </div>
+                        </div>
+
+                        <div style="text-align:right;">
+                            <div style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted);">Tax Invoice</div>
+                            <h3 style="font-size:1.3rem; font-weight:800; color:var(--primary); font-family:monospace; margin:2px 0 0 0;" th:text="'INV-' + ${bill.id}">INV-1</h3>
+                            <div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">
+                                Date: <strong th:text="${bill.createdAt != null ? #temporals.format(bill.createdAt, 'dd MMM yyyy, HH:mm') : 'Today'}">06 Oct 2026</strong>
+                            </div>
+                            <div style="margin-top:8px;">
+                                <span class="badge" style="font-size:13px; padding:6px 14px;"
+                                      th:classappend="${bill.status == 'Paid'} ? 'badge-paid' : (${bill.status == 'Partial'} ? 'badge-partial' : 'badge-pending')"
+                                      th:text="${bill.status}">Paid</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th>Description</th><th class="text-right">Amount (₹)</th></tr></thead>
-                        <tbody>
-                            <tr><td>Consultation Fee</td><td class="text-right" th:text="${#numbers.formatDecimal(bill.consultationFee, 0, 2)}">0</td></tr>
-                            <tr><td>Medicine Cost</td><td class="text-right" th:text="${#numbers.formatDecimal(bill.medicineCost, 0, 2)}">0</td></tr>
-                            <tr><td>Lab Test Cost</td><td class="text-right" th:text="${#numbers.formatDecimal(bill.labTestCost, 0, 2)}">0</td></tr>
-                            <tr><td>Room Charges</td><td class="text-right" th:text="${#numbers.formatDecimal(bill.roomCharges, 0, 2)}">0</td></tr>
-                            <tr><td>Other Charges</td><td class="text-right" th:text="${#numbers.formatDecimal(bill.otherCharges, 0, 2)}">0</td></tr>
-                            <tr><td class="text-red">Discount</td><td class="text-right text-red" th:text="'-' + ${#numbers.formatDecimal(bill.discount, 0, 2)}">0</td></tr>
-                            <tr><td>Tax (5%)</td><td class="text-right" th:text="${#numbers.formatDecimal(bill.tax, 0, 2)}">0</td></tr>
-                        </tbody>
-                    </table>
+
+                <!-- Billed To & Account Information -->
+                <div style="padding: 20px 32px; background: var(--bg-surface); border-bottom: 1px dashed var(--border-color); display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+                    <div>
+                        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:700;">Billed Patient</div>
+                        <div style="font-size:1.15rem; font-weight:700; margin-top:2px;">
+                            <a th:href="@{/patients/view/{id}(id=${bill.patient.id})}" th:text="${bill.patient.fullName}" style="color:var(--text-primary); text-decoration:none;">Patient Name</a>
+                        </div>
+                        <div style="font-size:13px; color:var(--text-muted); margin-top:2px;">
+                            <span style="font-family:monospace; font-weight:600;" th:text="${bill.patient.patientId}">PID-1001</span> &bull; 
+                            <span th:text="${bill.patient.gender}">Gender</span>, 
+                            <span th:text="${bill.patient.age} + ' yrs'">30 yrs</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:700;">Contact &amp; Address</div>
+                        <div style="font-size:13px; margin-top:4px;">
+                            <strong>Phone:</strong> <span th:text="${bill.patient.phone ?: 'N/A'}">-</span>
+                        </div>
+                        <div style="font-size:13px; margin-top:2px; color:var(--text-muted);" th:text="${bill.patient.address ?: 'OPD Registration'}">
+                            Address
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:700;">Payment Terms</div>
+                        <div style="font-size:13px; margin-top:4px;">
+                            <strong>Method:</strong> <span th:text="${bill.paymentMethod}">Cash</span>
+                        </div>
+                        <div style="font-size:13px; margin-top:2px;">
+                            <strong>Settlement:</strong> 
+                            <span th:if="${bill.status == 'Paid'}" style="color:var(--success); font-weight:600;">Fully Cleared</span>
+                            <span th:if="${bill.status != 'Paid'}" style="color:var(--danger); font-weight:600;">Due on Receipt</span>
+                        </div>
+                    </div>
                 </div>
-                <div style="display:flex; justify-content:space-between; padding:20px; margin-top:12px; background:rgba(99,102,241,0.1); border-radius:12px;">
-                    <div><span class="text-muted">Total Amount</span><div style="font-size:24px; font-weight:800;">₹<span th:text="${#numbers.formatDecimal(bill.totalAmount, 0, 2)}">0</span></div></div>
-                    <div class="text-right"><span class="text-muted">Paid</span><div style="font-size:24px; font-weight:800;" class="text-green">₹<span th:text="${#numbers.formatDecimal(bill.paidAmount, 0, 2)}">0</span></div></div>
+
+                <!-- Itemized Breakdown (Bill Items if present) -->
+                <div style="padding: 24px 32px;">
+                    
+                    <!-- Itemized Medicines / Services Table if items exist -->
+                    <div th:if="${!#lists.isEmpty(bill.items)}" style="margin-bottom:24px;">
+                        <h4 style="font-size:13px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:12px;">
+                            Itemized Charges &amp; Pharmacy Medications
+                        </h4>
+                        <div class="table-container" style="border: 1px solid var(--border-color); border-radius: 8px;">
+                            <table style="margin:0;">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Description</th>
+                                        <th>Category</th>
+                                        <th class="text-right">Unit Price</th>
+                                        <th class="text-right">Qty</th>
+                                        <th class="text-right">Total (₹)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="item, stat : ${bill.items}">
+                                        <td th:text="${stat.index + 1}">1</td>
+                                        <td style="font-weight:600;" th:text="${item.description}">Amoxicillin 500mg</td>
+                                        <td><span class="badge badge-active" th:text="${item.category}">Pharmacy</span></td>
+                                        <td class="text-right" th:text="'₹' + ${#numbers.formatDecimal(item.unitPrice, 1, 2)}">₹50.00</td>
+                                        <td class="text-right" th:text="${item.quantity}">2</td>
+                                        <td class="text-right" style="font-weight:700;" th:text="'₹' + ${#numbers.formatDecimal(item.totalPrice, 1, 2)}">₹100.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Departmental Charges Summary Table -->
+                    <h4 style="font-size:13px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:12px;">
+                        Departmental Fee Schedule
+                    </h4>
+                    <div class="table-container" style="border: 1px solid var(--border-color); border-radius: 8px;">
+                        <table style="margin:0;">
+                            <thead>
+                                <tr>
+                                    <th>Service / Department Component</th>
+                                    <th class="text-right">Amount (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${bill.consultationFee > 0}">
+                                    <td><i class='bx bxs-user-badge text-primary mr-1'></i> Doctor Consultation &amp; OPD Evaluation</td>
+                                    <td class="text-right" style="font-weight:600;" th:text="'₹' + ${#numbers.formatDecimal(bill.consultationFee, 1, 2)}">₹500.00</td>
+                                </tr>
+                                <tr th:if="${bill.medicineCost > 0 and #lists.isEmpty(bill.items)}">
+                                    <td><i class='bx bxs-capsule text-primary mr-1'></i> Dispensed Medications &amp; Pharmacy Supplies</td>
+                                    <td class="text-right" style="font-weight:600;" th:text="'₹' + ${#numbers.formatDecimal(bill.medicineCost, 1, 2)}">₹0.00</td>
+                                </tr>
+                                <tr th:if="${bill.labTestCost > 0}">
+                                    <td><i class='bx bxs-flask text-primary mr-1'></i> Clinical Laboratory Investigations &amp; Diagnostics</td>
+                                    <td class="text-right" style="font-weight:600;" th:text="'₹' + ${#numbers.formatDecimal(bill.labTestCost, 1, 2)}">₹0.00</td>
+                                </tr>
+                                <tr th:if="${bill.roomCharges > 0}">
+                                    <td><i class='bx bxs-bed text-primary mr-1'></i> Inpatient Ward / Bed Accommodation Charges</td>
+                                    <td class="text-right" style="font-weight:600;" th:text="'₹' + ${#numbers.formatDecimal(bill.roomCharges, 1, 2)}">₹0.00</td>
+                                </tr>
+                                <tr th:if="${bill.otherCharges > 0}">
+                                    <td><i class='bx bx-plus-circle text-primary mr-1'></i> Nursing Care &amp; Operational Charges</td>
+                                    <td class="text-right" style="font-weight:600;" th:text="'₹' + ${#numbers.formatDecimal(bill.otherCharges, 1, 2)}">₹0.00</td>
+                                </tr>
+                                <tr th:if="${bill.discount > 0}">
+                                    <td style="color:var(--danger);"><i class='bx bxs-tag text-red mr-1'></i> Concession / Approved Discount</td>
+                                    <td class="text-right" style="color:var(--danger); font-weight:600;" th:text="'- ₹' + ${#numbers.formatDecimal(bill.discount, 1, 2)}">- ₹0.00</td>
+                                </tr>
+                                <tr>
+                                    <td><i class='bx bx-calculator text-muted mr-1'></i> Hospital GST &amp; Municipal Tax (5%)</td>
+                                    <td class="text-right" style="font-weight:600;" th:text="'₹' + ${#numbers.formatDecimal(bill.tax, 1, 2)}">₹0.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Grand Totals Banner -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-top:24px; padding:20px 24px; background:var(--bg-surface-hover); border:1px solid var(--border-color); border-radius:12px;">
+                        <div>
+                            <div style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:700;">Grand Total Amount</div>
+                            <div style="font-size:1.8rem; font-weight:800; color:var(--text-primary); margin-top:2px;">
+                                ₹<span th:text="${#numbers.formatDecimal(bill.totalAmount, 1, 2)}">0.00</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:700;">Total Paid</div>
+                            <div style="font-size:1.8rem; font-weight:800; color:var(--success); margin-top:2px;">
+                                ₹<span th:text="${#numbers.formatDecimal(bill.paidAmount, 1, 2)}">0.00</span>
+                            </div>
+                        </div>
+
+                        <div style="text-align:right;">
+                            <div style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); font-weight:700;">Balance Due</div>
+                            <div style="font-size:1.8rem; font-weight:800; margin-top:2px;"
+                                 th:classappend="${bill.totalAmount - bill.paidAmount > 0} ? 'text-red' : 'text-green'">
+                                ₹<span th:text="${#numbers.formatDecimal(bill.totalAmount - bill.paidAmount, 1, 2)}">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description / Clinical Remarks if any -->
+                    <div th:if="${bill.description != null and !#strings.isEmpty(bill.description)}"
+                         style="margin-top:20px; padding:12px 16px; background:var(--bg-body); border-radius:8px; font-size:13px; color:var(--text-secondary);">
+                        <strong>Billing Remarks:</strong> <span th:text="${bill.description}">Remarks</span>
+                    </div>
+
+                    <!-- Footer Stamp / Signatory -->
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:40px; padding-top:20px; border-top:1px dashed var(--border-color);">
+                        <div style="font-size:11px; color:var(--text-muted);">
+                            This is an official system-generated invoice from MedCare Hospital Management System.<br>
+                            For billing queries, email accounts@medcare.org or call ext. 104.
+                        </div>
+                        <div style="text-align:center;">
+                            <div style="border-bottom:1px solid var(--text-muted); width:160px; margin-bottom:6px;"></div>
+                            <div style="font-size:12px; font-weight:600; color:var(--text-secondary);">Authorized Signatory</div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
+
+            <!-- Side Card: Fast Payment Settlement Form (Visible when balance is pending) -->
+            <div class="d-print-none">
+                
+                <!-- If Unpaid / Partial: Record Payment Form -->
+                <div class="card" th:if="${bill.totalAmount - bill.paidAmount > 0}" style="margin-bottom:20px; border:2px solid var(--primary-border);">
+                    <div class="card-header" style="background:var(--primary-light);">
+                        <h3 style="font-size:1.05rem; margin:0; color:var(--primary-text);">
+                            <i class='bx bx-credit-card mr-1'></i> Record Payment
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/billing/pay/{id}(id=${bill.id})}" method="post">
+                            <div class="form-group" style="margin-bottom:14px;">
+                                <label class="form-label" for="amount">Payment Amount (₹) <span class="text-red">*</span></label>
+                                <input type="number" step="0.01" id="amount" name="amount"
+                                       th:value="${#numbers.formatDecimal(bill.totalAmount - bill.paidAmount, 1, 2)}"
+                                       max="${bill.totalAmount - bill.paidAmount}" class="form-control" required>
+                                <small class="text-muted" style="display:block; margin-top:4px;">
+                                    Outstanding Due: ₹<span th:text="${#numbers.formatDecimal(bill.totalAmount - bill.paidAmount, 1, 2)}">0.00</span>
+                                </small>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom:18px;">
+                                <label class="form-label" for="paymentMethod">Payment Method <span class="text-red">*</span></label>
+                                <select id="paymentMethod" name="paymentMethod" class="form-control" required>
+                                    <option value="Cash" th:selected="${bill.paymentMethod == 'Cash'}">Cash</option>
+                                    <option value="UPI" th:selected="${bill.paymentMethod == 'UPI'}">UPI (Google Pay / PhonePe / Paytm)</option>
+                                    <option value="Card" th:selected="${bill.paymentMethod == 'Card'}">Credit / Debit Card</option>
+                                    <option value="Insurance" th:selected="${bill.paymentMethod == 'Insurance'}">Health Insurance / TPA</option>
+                                    <option value="Net Banking" th:selected="${bill.paymentMethod == 'Net Banking'}">Net Banking</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-success" style="width:100%; justify-content:center; padding:12px;">
+                                <i class='bx bx-check-double'></i> Confirm &amp; Collect Payment
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- If Paid: Verification Stamp Card -->
+                <div class="card" th:if="${bill.totalAmount - bill.paidAmount <= 0}" style="margin-bottom:20px; border:2px solid var(--success-border); background:var(--success-light);">
+                    <div class="card-body" style="text-align:center; padding:24px;">
+                        <div style="font-size:42px; color:var(--success);"><i class='bx bxs-check-shield'></i></div>
+                        <h3 style="font-size:1.2rem; font-weight:800; color:var(--success-text); margin:6px 0 2px 0;">PAID IN FULL</h3>
+                        <p style="font-size:13px; color:var(--text-secondary); margin:0;">
+                            Invoice cleared via <strong th:text="${bill.paymentMethod}">Cash</strong>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Quick Patient Profile Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 style="font-size:0.95rem; margin:0;"><i class='bx bxs-user-detail text-primary mr-1'></i> Patient Quick Info</h4>
+                    </div>
+                    <div class="card-body" style="font-size:13px;">
+                        <p style="margin:0 0 6px 0;"><strong>Name:</strong> <span th:text="${bill.patient.fullName}">Patient</span></p>
+                        <p style="margin:0 0 6px 0;"><strong>ID:</strong> <span style="font-family:monospace;" th:text="${bill.patient.patientId}">PID-1001</span></p>
+                        <p style="margin:0 0 6px 0;"><strong>Phone:</strong> <span th:text="${bill.patient.phone ?: 'N/A'}">-</span></p>
+                        <a th:href="@{/patients/view/{id}(id=${bill.patient.id})}" class="btn btn-sm btn-outline" style="width:100%; justify-content:center; margin-top:8px;">
+                            <i class='bx bx-id-card'></i> Open 360° Profile
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
+
     </div>
 </div>
+
+<style>
+@media print {
+    .sidebar, .top-header, .page-header, .d-print-none, .invoice-layout-grid > div:last-child {
+        display: none !important;
+    }
+    .invoice-layout-grid {
+        display: block !important;
+    }
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .invoice-card {
+        border: none !important;
+        box-shadow: none !important;
+        width: 100% !important;
+    }
+}
+</style>
 </body>
 </html>

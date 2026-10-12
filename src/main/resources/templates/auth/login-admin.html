@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle ?: 'System Administrator Portal | MedCare'}">System Administrator Portal | MedCare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('hms-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body class="auth-page role-admin">
+
+    <!-- Ambient glow -->
+    <div class="auth-ambient-glow" aria-hidden="true"></div>
+
+    <!-- Theme Switcher Top-Right -->
+    <div style="position:fixed; top:20px; right:24px; z-index:100;">
+        <button type="button" class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" title="Switch Light/Dark Theme">
+            <div class="toggle-track">
+                <i class='bx bxs-sun icon-sun'></i>
+                <i class='bx bxs-moon icon-moon'></i>
+                <span class="toggle-thumb"></span>
+            </div>
+        </button>
+    </div>
+
+    <div class="auth-card role-admin">
+        <!-- Role Switcher Tabs -->
+        <div class="auth-role-switcher">
+            <a th:href="@{/login/admin}" class="auth-role-tab active tab-admin">
+                <i class='bx bxs-shield-quarter'></i> Admin
+            </a>
+            <a th:href="@{/login/doctor}" class="auth-role-tab tab-doctor">
+                <i class='bx bx-plus-medical'></i> Doctor
+            </a>
+            <a th:href="@{/login/receptionist}" class="auth-role-tab tab-receptionist">
+                <i class='bx bxs-id-card'></i> Reception
+            </a>
+        </div>
+
+        <div class="auth-header">
+            <div class="auth-icon-wrap">
+                <i class='bx bxs-shield-plus'></i>
+            </div>
+            <div class="auth-role-badge">
+                <i class='bx bxs-shield'></i> System Administrator
+            </div>
+            <h1>Executive Admin Portal</h1>
+            <p>Access hospital operations, clinical ledgers &amp; system settings</p>
+        </div>
+
+        <!-- Success Flash / Registration Success -->
+        <div th:if="${success}" class="alert alert-success">
+            <i class='bx bx-check-circle'></i>
+            <span th:text="${success}">Account ready.</span>
+        </div>
+        <div th:if="${param.registered}" class="alert alert-success">
+            <i class='bx bx-check-circle'></i>
+            Admin account created successfully! Please sign in with your credentials.
+        </div>
+
+        <!-- Role Mismatch Error -->
+        <div th:if="${param.roleMismatch}" class="alert alert-danger">
+            <i class='bx bx-shield-x'></i>
+            <strong>Access Denied:</strong> This portal is strictly for System Administrators. If you are a Doctor or Receptionist, please switch to your portal above.
+        </div>
+
+        <!-- General Error Message -->
+        <div th:if="${param.error}" class="alert alert-danger">
+            <i class='bx bx-error-circle'></i>
+            Invalid admin credentials. Please verify username and password.
+        </div>
+
+        <!-- Logout Message -->
+        <div th:if="${param.logout}" class="alert alert-success">
+            <i class='bx bx-check-circle'></i>
+            Administrator session ended securely.
+        </div>
+
+        <form th:action="@{/login}" method="post">
+            <input type="hidden" name="portalRole" value="ADMIN">
+
+            <div class="auth-input-group">
+                <label for="username">Admin Username</label>
+                <div class="auth-input-wrapper">
+                    <input type="text" id="username" name="username" class="form-control"
+                           placeholder="Enter admin username (e.g. admin)" required autofocus>
+                    <i class='bx bx-user auth-input-icon'></i>
+                </div>
+            </div>
+
+            <div class="auth-input-group">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <label for="password" style="margin:0;">Password</label>
+                    <span style="font-size:11px; color:var(--text-muted);">Minimum 6 chars</span>
+                </div>
+                <div class="auth-input-wrapper">
+                    <input type="password" id="password" name="password" class="form-control"
+                           placeholder="Enter admin password" required>
+                    <i class='bx bx-lock-alt auth-input-icon'></i>
+                </div>
+            </div>
+
+            <button type="submit" class="auth-submit-btn">
+                <i class='bx bx-log-in'></i>
+                Sign In to Executive Portal
+            </button>
+        </form>
+
+        <div class="auth-demo-box">
+            <p class="text-muted" style="font-size:12px; margin-bottom:10px; font-weight:600;">
+                Quick Demo Access:
+            </p>
+            <button type="button" class="btn btn-sm btn-outline w-100" onclick="fillAdminCredentials()">
+                <i class='bx bxs-magic-wand text-primary'></i> Autofill Admin Credentials (<code>admin</code> / <code>admin123</code>)
+            </button>
+        </div>
+
+        <div class="auth-footer-links">
+            <a th:href="@{/register/admin}" style="font-weight:600;">
+                <i class='bx bx-user-plus'></i> Register New Admin
+            </a>
+            <a th:href="@{/login}" style="color:var(--text-muted);">
+                <i class='bx bx-grid-alt'></i> All Portals
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function fillAdminCredentials() {
+            document.getElementById('username').value = 'admin';
+            document.getElementById('password').value = 'admin123';
+        }
+    </script>
+    <script th:src="@{/js/theme.js}"></script>
+</body>
+</html>

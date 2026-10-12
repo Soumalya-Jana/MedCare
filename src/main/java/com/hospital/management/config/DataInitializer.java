@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 /**
  * Initializes the database with sample data on first run.
@@ -28,6 +29,7 @@ public class DataInitializer {
             LabReportRepository labReportRepo,
             BillRepository billRepo,
             PrescriptionRepository prescriptionRepo,
+            EmergencyCaseRepository emergencyRepo,
             PasswordEncoder passwordEncoder
     ) {
         return args -> {
@@ -36,8 +38,44 @@ public class DataInitializer {
                 seedPrescriptions(prescriptionRepo, patientRepo, doctorRepo);
             }
 
+            // Seed emergency cases if missing
+            if (emergencyRepo.count() == 0 && patientRepo.count() > 0) {
+                seedEmergencyCases(emergencyRepo, patientRepo, doctorRepo);
+            }
+
             // Only seed if database is empty
-            if (userRepo.count() > 0) return;
+            if (userRepo.count() > 0) {
+                // Ensure existing lab reports have sample attachments linked
+                for (LabReport lr : labReportRepo.findAll()) {
+                    if ("Chest X-Ray (PA View)".equalsIgnoreCase(lr.getTestName()) && !lr.hasAttachment()) {
+                        lr.setAttachmentFileName("chest_xray_pa_view.jpg");
+                        lr.setAttachmentFileType("image/jpeg");
+                        lr.setAttachmentFilePath("lab_2_chest_xray_pa_view.jpg");
+                        lr.setAttachmentFileSize(645597L);
+                        labReportRepo.save(lr);
+                    }
+                }
+                boolean hasMri = labReportRepo.findAll().stream().anyMatch(r -> "MRI Scan".equalsIgnoreCase(r.getTestCategory()));
+                if (!hasMri && patientRepo.count() > 0 && doctorRepo.count() > 0) {
+                    Patient p1 = patientRepo.findAll().get(0);
+                    Doctor doc1 = doctorRepo.findAll().get(0);
+                    labReportRepo.save(LabReport.builder()
+                            .patient(p1).doctor(doc1)
+                            .testName("Brain MRI Scan (Axial T2/FLAIR)")
+                            .testCategory("MRI Scan")
+                            .result("Cerebral parenchyma demonstrates normal morphology. Normal ventricles and sulci. No intracranial mass effect or acute hemorrhage.")
+                            .normalRange("Normal intracranial structure")
+                            .remarks("Unremarkable brain MRI scan.")
+                            .cost(3500.0)
+                            .status("Completed")
+                            .attachmentFileName("brain_mri_axial_scan.jpg")
+                            .attachmentFileType("image/jpeg")
+                            .attachmentFilePath("lab_4_brain_mri_axial.jpg")
+                            .attachmentFileSize(602583L)
+                            .build());
+                }
+                return;
+            }
 
             System.out.println("🏥 Seeding database with initial data...");
 
@@ -513,5 +551,181 @@ public class DataInitializer {
             prescriptionRepo.save(rx2);
         }
         System.out.println("✅ Sample prescriptions (Rx) seeded successfully!");
+    }
+
+    private void seedEmergencyCases(EmergencyCaseRepository emergencyRepo, PatientRepository patientRepo, DoctorRepository doctorRepo) {
+        List<Patient> patients = patientRepo.findAll();
+        List<Doctor> doctors = doctorRepo.findAll();
+
+        Doctor traumaDoc = doctors.isEmpty() ? null : doctors.get(0);
+        Doctor cardioDoc = doctors.size() > 1 ? doctors.get(1) : traumaDoc;
+
+        // Case 1: Code Red - Unidentified Trauma Polytrauma (Critical Active)
+        EmergencyCase ec1 = new EmergencyCase();
+        ec1.setCaseNumber("ER-20261011-001");
+        ec1.setIsUnidentified(true);
+        ec1.setTemporaryIdentifier("Trauma Male ~35y - Road Accident");
+        ec1.setPatientName("[UNIDENTIFIED] Trauma Male ~35y");
+        ec1.setAge(35);
+        ec1.setGender("Male");
+        ec1.setContactPhone("Brought by Police Highway Patrol");
+        ec1.setTriageLevel("CODE_RED");
+        ec1.setTriagePriority(1);
+        ec1.setStatus("IN_RESUSCITATION");
+        ec1.setArrivalDateTime(java.time.LocalDateTime.now().minusMinutes(25));
+        ec1.setArrivalMode("AMBULANCE");
+        ec1.setIncidentType("TRAUMA_ACCIDENT");
+        ec1.setAssignedDoctor(traumaDoc);
+        ec1.setTriageNurse("Nurse Priya Nair (Senior Triage)");
+        ec1.setBayNumber("Trauma Bay 1 (Resuscitation)");
+        ec1.setBloodPressure("85/50");
+        ec1.setHeartRate(128);
+        ec1.setRespiratoryRate(30);
+        ec1.setOxygenSaturation(88.0);
+        ec1.setTemperature(97.4);
+        ec1.setGlasgowComaScale(8);
+        ec1.setBloodGlucose(110);
+        ec1.setPainScore(10);
+        ec1.setChiefComplaint("Severe polytrauma following high-speed motor vehicle collision. Unresponsive, open right femoral fracture, severe chest wall contusion.");
+        ec1.setTriageNotes("Flail chest segment noted right anterolateral. Markedly hypotensive on arrival. Immediate Code Red trauma team activated.");
+        ec1.setEmergencyTreatmentGiven("[23:05] Rapid sequence intubation (7.5 cuffed ETT) with cervical collar maintained.\n[23:08] 2x 14G IV access secured; rapid infusion of O-negative uncrossed blood.\n[23:12] FAST ultrasound scan positive in splenorenal recess.\n[23:18] Orthopedic & Trauma Surgery consult on standby for urgent OT transfer.");
+        emergencyRepo.save(ec1);
+
+        // Case 2: Code Red - Acute Inferior STEMI (Critical Active)
+        EmergencyCase ec2 = new EmergencyCase();
+        ec2.setCaseNumber("ER-20261011-002");
+        if (!patients.isEmpty()) {
+            ec2.setPatient(patients.get(0));
+            ec2.setPatientName(patients.get(0).getFullName());
+            ec2.setAge(patients.get(0).getAge());
+            ec2.setGender(patients.get(0).getGender());
+            ec2.setContactPhone(patients.get(0).getPhone());
+        } else {
+            ec2.setPatientName("John Doe");
+            ec2.setAge(45);
+            ec2.setGender("Male");
+        }
+        ec2.setTriageLevel("CODE_RED");
+        ec2.setTriagePriority(1);
+        ec2.setStatus("IN_RESUSCITATION");
+        ec2.setArrivalDateTime(java.time.LocalDateTime.now().minusMinutes(40));
+        ec2.setArrivalMode("AMBULANCE");
+        ec2.setIncidentType("CARDIAC_ARREST");
+        ec2.setAssignedDoctor(cardioDoc);
+        ec2.setTriageNurse("Nurse David Miller");
+        ec2.setBayNumber("Trauma Bay 2 (Cardiac)");
+        ec2.setBloodPressure("165/102");
+        ec2.setHeartRate(115);
+        ec2.setRespiratoryRate(24);
+        ec2.setOxygenSaturation(93.0);
+        ec2.setTemperature(98.6);
+        ec2.setGlasgowComaScale(14);
+        ec2.setBloodGlucose(145);
+        ec2.setPainScore(9);
+        ec2.setChiefComplaint("Crushing substernal chest pain radiating to left shoulder and jaw for 45 mins. Diaphoretic, pale, acute distress.");
+        ec2.setTriageNotes("Stat 12-lead ECG reveals acute ST elevation in leads II, III, and aVF with reciprocal depression. Primary PCI protocol initiated.");
+        ec2.setEmergencyTreatmentGiven("[22:45] High-flow supplemental O2 via non-rebreather mask.\n[22:48] Aspirin 325 mg chewed + Clopidogrel 600 mg loading dose.\n[22:52] IV Nitroglycerin infusion titrated; Morphine 4 mg IV.\n[22:58] Cath lab prepped for emergency coronary intervention.");
+        emergencyRepo.save(ec2);
+
+        // Case 3: Code Orange - Severe Acute Asthma / Respiratory Failure
+        EmergencyCase ec3 = new EmergencyCase();
+        ec3.setCaseNumber("ER-20261011-003");
+        if (patients.size() > 1) {
+            ec3.setPatient(patients.get(1));
+            ec3.setPatientName(patients.get(1).getFullName());
+            ec3.setAge(patients.get(1).getAge());
+            ec3.setGender(patients.get(1).getGender());
+            ec3.setContactPhone(patients.get(1).getPhone());
+        } else {
+            ec3.setPatientName("Priya Patel");
+            ec3.setAge(29);
+            ec3.setGender("Female");
+        }
+        ec3.setTriageLevel("CODE_ORANGE");
+        ec3.setTriagePriority(2);
+        ec3.setStatus("UNDER_OBSERVATION");
+        ec3.setArrivalDateTime(java.time.LocalDateTime.now().minusMinutes(65));
+        ec3.setArrivalMode("WALK_IN");
+        ec3.setIncidentType("RESPIRATORY_DISTRESS");
+        ec3.setAssignedDoctor(traumaDoc);
+        ec3.setTriageNurse("Nurse Anita Roy");
+        ec3.setBayNumber("Acute Observation Bay 1");
+        ec3.setBloodPressure("130/82");
+        ec3.setHeartRate(108);
+        ec3.setRespiratoryRate(28);
+        ec3.setOxygenSaturation(90.5);
+        ec3.setTemperature(99.1);
+        ec3.setGlasgowComaScale(15);
+        ec3.setBloodGlucose(105);
+        ec3.setPainScore(5);
+        ec3.setChiefComplaint("Acute severe exacerbation of bronchial asthma. Tripod positioning, speaking only 2-word sentences, audible expiratory wheeze.");
+        ec3.setTriageNotes("Marked respiratory effort with accessory muscle use. Refractory to salbutamol MDI at home.");
+        ec3.setEmergencyTreatmentGiven("[22:15] Continuous nebulization with Duolin (Levosalbutamol + Ipratropium).\n[22:20] IV Hydrocortisone 200 mg administered.\n[22:38] Magnesium Sulfate 2g IV over 20 mins.\n[22:55] SpO2 stabilized to 96% on 3L nasal cannula; wheeze improved.");
+        emergencyRepo.save(ec3);
+
+        // Case 4: Code Yellow - Compound Fracture / Fall from Height
+        EmergencyCase ec4 = new EmergencyCase();
+        ec4.setCaseNumber("ER-20261011-004");
+        if (patients.size() > 2) {
+            ec4.setPatient(patients.get(2));
+            ec4.setPatientName(patients.get(2).getFullName());
+            ec4.setAge(patients.get(2).getAge());
+            ec4.setGender(patients.get(2).getGender());
+            ec4.setContactPhone(patients.get(2).getPhone());
+        } else {
+            ec4.setPatientName("Robert Smith");
+            ec4.setAge(52);
+            ec4.setGender("Male");
+        }
+        ec4.setTriageLevel("CODE_YELLOW");
+        ec4.setTriagePriority(3);
+        ec4.setStatus("TRIAGED");
+        ec4.setArrivalDateTime(java.time.LocalDateTime.now().minusMinutes(90));
+        ec4.setArrivalMode("WALK_IN");
+        ec4.setIncidentType("TRAUMA_ACCIDENT");
+        ec4.setAssignedDoctor(traumaDoc);
+        ec4.setTriageNurse("Nurse David Miller");
+        ec4.setBayNumber("ER Fast Track 1");
+        ec4.setBloodPressure("126/80");
+        ec4.setHeartRate(88);
+        ec4.setRespiratoryRate(18);
+        ec4.setOxygenSaturation(98.0);
+        ec4.setTemperature(98.4);
+        ec4.setGlasgowComaScale(15);
+        ec4.setBloodGlucose(98);
+        ec4.setPainScore(8);
+        ec4.setChiefComplaint("Right wrist deformity and severe localized tenderness after fall from a 6-foot ladder.");
+        ec4.setTriageNotes("Skin intact, radial pulse palpable (2+), capillary refill < 2s. No neurovascular deficit in distal hand.");
+        ec4.setEmergencyTreatmentGiven("[21:30] Forearm immobilization with volar splint.\n[21:35] IV Tramadol 50 mg + Ondansetron 4 mg infused.\n[21:40] Stat X-Ray Wrist PA/Lateral ordered.");
+        emergencyRepo.save(ec4);
+
+        // Case 5: Code Green - Discharged Stable
+        EmergencyCase ec5 = new EmergencyCase();
+        ec5.setCaseNumber("ER-20261011-005");
+        ec5.setPatientName("Ananya Sen");
+        ec5.setAge(24);
+        ec5.setGender("Female");
+        ec5.setContactPhone("+91 98765 43299");
+        ec5.setTriageLevel("CODE_GREEN");
+        ec5.setTriagePriority(4);
+        ec5.setStatus("DISCHARGED_STABLE");
+        ec5.setArrivalDateTime(java.time.LocalDateTime.now().minusHours(3));
+        ec5.setArrivalMode("WALK_IN");
+        ec5.setIncidentType("GENERAL_ACUTE");
+        ec5.setBayNumber("Triage Desk B");
+        ec5.setBloodPressure("118/74");
+        ec5.setHeartRate(74);
+        ec5.setRespiratoryRate(16);
+        ec5.setOxygenSaturation(99.0);
+        ec5.setTemperature(98.2);
+        ec5.setGlasgowComaScale(15);
+        ec5.setPainScore(2);
+        ec5.setChiefComplaint("Accidental sharp kitchen knife laceration on left index finger with active bleeding.");
+        ec5.setDisposition("Discharged Stable");
+        ec5.setDispositionNotes("Wound irrigated with sterile saline, repaired with 3x Ethilon 4-0 sutures under local anesthesia (1% Lignocaine). Tetanus toxoid booster administered. Oral antibiotics prescribed.");
+        ec5.setDispositionDateTime(java.time.LocalDateTime.now().minusHours(1));
+        emergencyRepo.save(ec5);
+
+        System.out.println("🚨 Sample Emergency & Triage cases seeded successfully!");
     }
 }

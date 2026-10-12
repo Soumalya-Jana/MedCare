@@ -26,6 +26,7 @@ public class DashboardController {
     @Autowired private PharmacyService pharmacyService;
     @Autowired private LabReportService labReportService;
     @Autowired private UserService userService;
+    @Autowired private EmergencyService emergencyService;
 
     /**
      * Primary entry point: intelligently routes to the role-specific dashboard.
@@ -112,6 +113,10 @@ public class DashboardController {
         model.addAttribute("totalRevenue", billingService.getTotalRevenue());
         model.addAttribute("monthlyRevenue", billingService.getMonthlyRevenue());
         model.addAttribute("pendingBills", billingService.countByStatus("Pending"));
+
+        // Emergency & Triage stats
+        model.addAttribute("activeEmergencyCases", emergencyService.countActiveCases());
+        model.addAttribute("codeRedCases", emergencyService.countCodeRedCases());
 
         // Pharmacy & Lab stats
         model.addAttribute("lowStockMedicines", pharmacyService.findLowStockMedicines().size());
@@ -228,6 +233,8 @@ public class DashboardController {
             model.addAttribute("docCompletedConsultations", appointmentService.countCompletedAppointmentsByDoctor(docId));
             model.addAttribute("docTotalPatients", appointmentService.countDistinctPatientsByDoctor(docId));
             model.addAttribute("docPendingLabReports", labReportService.countPendingByDoctor(docId));
+            model.addAttribute("activeEmergencyCases", emergencyService.countActiveCases());
+            model.addAttribute("codeRedCases", emergencyService.countCodeRedCases());
 
             // Doctor Lists
             model.addAttribute("docTodaysAppointmentsList", appointmentService.findTodaysAppointmentsByDoctor(docId));
@@ -248,6 +255,8 @@ public class DashboardController {
         model.addAttribute("totalBeds", bedService.countAllBeds());
         model.addAttribute("totalPatients", patientService.countAll());
         model.addAttribute("activePatients", patientService.countByStatus("Active"));
+        model.addAttribute("activeEmergencyCases", emergencyService.countActiveCases());
+        model.addAttribute("codeRedCases", emergencyService.countCodeRedCases());
         model.addAttribute("pendingBills", billingService.countByStatus("Pending"));
         model.addAttribute("monthlyRevenue", billingService.getMonthlyRevenue());
 

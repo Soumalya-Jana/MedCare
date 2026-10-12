@@ -1,0 +1,42 @@
+# Compiled Class files
+*.class
+
+# Log files
+*.log
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven build directory
+target/
+
+# Local tools directory
+.tools/
+
+# Temporary testing & session files
+cookies.txt
+*.tmp
+*.bak
+
+# IDE and Editor files
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle ?: 'Register Reception Staff | MedCare'}">Register Reception Staff | MedCare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('hms-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body class="auth-page role-receptionist">
+
+    <!-- Ambient glow -->
+    <div class="auth-ambient-glow" aria-hidden="true"></div>
+
+    <!-- Theme Switcher Top-Right -->
+    <div style="position:fixed; top:20px; right:24px; z-index:100;">
+        <button type="button" class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" title="Switch Light/Dark Theme">
+            <div class="toggle-track">
+                <i class='bx bxs-sun icon-sun'></i>
+                <i class='bx bxs-moon icon-moon'></i>
+                <span class="toggle-thumb"></span>
+            </div>
+        </button>
+    </div>
+
+    <div class="auth-card auth-card-wide role-receptionist">
+        <div class="auth-header">
+            <div class="auth-icon-wrap">
+                <i class='bx bxs-id-card'></i>
+            </div>
+            <div class="auth-role-badge">
+                <i class='bx bx-user-plus'></i> Front Desk Operations
+            </div>
+            <h1>Register Reception Staff</h1>
+            <p>Setup a front desk user account for patient intake, admissions &amp; cashier billing</p>
+        </div>
+
+        <!-- Error Alert -->
+        <div th:if="${error}" class="alert alert-danger mb-3">
+            <i class='bx bx-error-circle'></i>
+            <span th:text="${error}">Registration error occurred.</span>
+        </div>
+
+        <form th:action="@{/register/receptionist}" th:object="${receptionistDto}" method="post">
+            <div class="auth-grid-2">
+                <div class="auth-input-group">
+                    <label for="fullName">Full Staff Name *</label>
+                    <div class="auth-input-wrapper">
+                        <input type="text" id="fullName" th:field="*{fullName}" class="form-control"
+                               placeholder="e.g. Pooja Banerjee" required autofocus>
+                        <i class='bx bx-user auth-input-icon'></i>
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="username">Staff Username *</label>
+                    <div class="auth-input-wrapper">
+                        <input type="text" id="username" th:field="*{username}" class="form-control"
+                               placeholder="e.g. pooja.reception" required>
+                        <i class='bx bx-at auth-input-icon'></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="auth-grid-2">
+                <div class="auth-input-group">
+                    <label for="email">Work Email</label>
+                    <div class="auth-input-wrapper">
+                        <input type="email" id="email" th:field="*{email}" class="form-control"
+                               placeholder="e.g. pooja.b@hospital.com">
+                        <i class='bx bx-envelope auth-input-icon'></i>
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="phone">Contact Mobile Number</label>
+                    <div class="auth-input-wrapper">
+                        <input type="tel" id="phone" th:field="*{phone}" class="form-control"
+                               placeholder="e.g. +91 98765 43220">
+                        <i class='bx bx-phone auth-input-icon'></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="auth-grid-2">
+                <div class="auth-input-group">
+                    <label for="employeeId">Employee / Badge ID</label>
+                    <div class="auth-input-wrapper">
+                        <input type="text" id="employeeId" th:field="*{employeeId}" class="form-control"
+                               placeholder="e.g. REC-2026-15">
+                        <i class='bx bx-badge-check auth-input-icon'></i>
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="shift">Assigned Duty Shift / Counter</label>
+                    <select id="shift" th:field="*{shift}" class="form-control" style="height:44px;">
+                        <option value="General Shift (09:00 - 17:00)">General Shift (09:00 - 17:00)</option>
+                        <option value="Morning Shift (07:00 - 15:00)">Morning Shift (07:00 - 15:00)</option>
+                        <option value="Evening Shift (15:00 - 23:00)">Evening Shift (15:00 - 23:00)</option>
+                        <option value="Night Emergency Shift (23:00 - 07:00)">Night Emergency Shift (23:00 - 07:00)</option>
+                        <option value="Emergency Front Desk (24/7 Rotational)">Emergency Front Desk (24/7 Rotational)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="auth-grid-2">
+                <div class="auth-input-group">
+                    <label for="password">Create Password *</label>
+                    <div class="auth-input-wrapper">
+                        <input type="password" id="password" th:field="*{password}" class="form-control"
+                               placeholder="Minimum 6 characters" minlength="6" required>
+                        <i class='bx bx-lock-alt auth-input-icon'></i>
+                    </div>
+                </div>
+
+                <div class="auth-input-group">
+                    <label for="confirmPassword">Confirm Password *</label>
+                    <div class="auth-input-wrapper">
+                        <input type="password" id="confirmPassword" th:field="*{confirmPassword}" class="form-control"
+                               placeholder="Re-enter password" minlength="6" required>
+                        <i class='bx bx-check-shield auth-input-icon'></i>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="auth-submit-btn">
+                <i class='bx bxs-id-card'></i>
+                Register Front Desk Staff Account
+            </button>
+        </form>
+
+        <div class="auth-footer-links" style="margin-top:24px; border-top:1px solid var(--border-color); padding-top:16px;">
+            <span>
+                Already registered?
+                <a th:href="@{/login/receptionist}" style="font-weight:700; color:#7c3aed;">Sign In to Reception Desk</a>
+            </span>
+            <a th:href="@{/register}" style="color:var(--text-muted);">
+                <i class='bx bx-grid-alt'></i> Other Portals
+            </a>
+        </div>
+    </div>
+
+    <script th:src="@{/js/theme.js}"></script>
+</body>
+</html>

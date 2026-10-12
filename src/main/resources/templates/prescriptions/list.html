@@ -5,12 +5,12 @@
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
         <!-- Page Header -->
-        <div class="page-header">
+        <div class="page-header pharmacy-hero">
             <div>
                 <h1><i class='bx bx-notepad mr-1'></i> Electronic Prescriptions (Rx)</h1>
-                <p class="text-muted" style="margin-top:4px;">Manage medical prescriptions, clinical dosages, and pharmacy dispensing</p>
+                <p class="text-muted" style="margin-top:4px;">Manage digital prescriptions, dosage regimens, and pharmacy dispensing workflows</p>
             </div>
-            <div class="page-actions">
+            <div class="page-actions" style="display:flex; gap:10px;">
                 <a th:href="@{/prescriptions/add}" class="btn btn-primary">
                     <i class='bx bx-plus'></i> Write New Prescription
                 </a>
@@ -27,31 +27,87 @@
             <span th:text="${error}">Error occurred</span>
         </div>
 
+        <!-- Prescriptions KPI Metric Cards -->
+        <div class="stats-grid mb-4">
+            <div class="stat-card blue">
+                <div class="stat-icon" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">
+                    <i class='bx bx-notepad'></i>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-value" th:text="${totalPrescriptions}">0</div>
+                    <div class="stat-label">Total Prescriptions</div>
+                </div>
+            </div>
+
+            <div class="stat-card orange">
+                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+                    <i class='bx bx-time'></i>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-value" th:text="${pendingDispenseCount}">0</div>
+                    <div class="stat-label">Awaiting Dispense</div>
+                </div>
+            </div>
+
+            <div class="stat-card green">
+                <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+                    <i class='bx bx-check-double'></i>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-value" th:text="${dispensedCount}">0</div>
+                    <div class="stat-label">Dispensed by Pharmacy</div>
+                </div>
+            </div>
+
+            <div class="stat-card purple">
+                <div class="stat-icon" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
+                    <i class='bx bx-calendar-event'></i>
+                </div>
+                <div class="stat-details">
+                    <div class="stat-value" th:text="${todaysPrescriptionsCount}">0</div>
+                    <div class="stat-label">Prescribed Today</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Filter & Search Bar -->
-        <div class="card mb-3" style="padding: 16px;">
+        <div class="card mb-4" style="padding: 16px 20px;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
                 <form th:action="@{/prescriptions}" method="get" style="display:flex; gap:12px; flex:1; max-width:500px;">
+                    <input type="hidden" name="status" th:if="${selectedStatus != null}" th:value="${selectedStatus}"/>
                     <div class="search-input-wrapper" style="flex:1;">
                         <span class="search-icon"><i class='bx bx-search'></i></span>
-                        <input type="text" name="search" th:value="${search}" placeholder="Search by Rx #, patient name, doctor, diagnosis..." class="form-control" style="padding-left:42px;">
+                        <input type="text" name="search" th:value="${search}" placeholder="Search Rx #, patient name, doctor, diagnosis..." class="form-control" style="padding-left:42px;">
                     </div>
                     <button type="submit" class="btn btn-primary"><i class='bx bx-filter-alt'></i> Search</button>
-                    <a th:if="${search != null or selectedStatus != null}" th:href="@{/prescriptions}" class="btn btn-outline">Clear</a>
+                    <a th:if="${search != null or selectedStatus != null}" th:href="@{/prescriptions}" class="btn btn-outline" title="Reset Filters">
+                        <i class='bx bx-reset'></i> Reset
+                    </a>
                 </form>
 
                 <div class="btn-group">
-                    <a th:href="@{/prescriptions}" class="btn btn-sm" th:classappend="${selectedStatus == null or selectedStatus == 'ALL'} ? 'btn-primary' : 'btn-outline'">All</a>
-                    <a th:href="@{/prescriptions(status='Active')}" class="btn btn-sm" th:classappend="${selectedStatus == 'Active'} ? 'btn-primary' : 'btn-outline'">
-                        Active / Pending
+                    <a th:href="@{/prescriptions(search=${search})}" class="btn btn-sm" th:classappend="${selectedStatus == null or selectedStatus == 'ALL'} ? 'btn-primary' : 'btn-outline'">
+                        All <span style="margin-left:4px; opacity:0.8;" th:text="'(' + ${totalPrescriptions} + ')'">(0)</span>
+                    </a>
+                    <a th:href="@{/prescriptions(status='Active', search=${search})}" class="btn btn-sm" th:classappend="${selectedStatus == 'Active'} ? 'btn-primary' : 'btn-outline'">
+                        Awaiting Dispense
                         <span th:if="${pendingDispenseCount > 0}" class="badge" style="background:#ef4444; color:#fff; margin-left:4px;" th:text="${pendingDispenseCount}">0</span>
                     </a>
-                    <a th:href="@{/prescriptions(status='Dispensed')}" class="btn btn-sm" th:classappend="${selectedStatus == 'Dispensed'} ? 'btn-primary' : 'btn-outline'">Dispensed</a>
+                    <a th:href="@{/prescriptions(status='Dispensed', search=${search})}" class="btn btn-sm" th:classappend="${selectedStatus == 'Dispensed'} ? 'btn-primary' : 'btn-outline'">
+                        Dispensed <span style="margin-left:4px; opacity:0.8;" th:text="'(' + ${dispensedCount} + ')'">(0)</span>
+                    </a>
                 </div>
             </div>
         </div>
 
         <!-- Prescriptions Table Card -->
         <div class="card">
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-weight:700; font-size:1.05rem;">Prescription Register</span>
+                    <span class="badge badge-occupied" th:text="${#lists.size(prescriptions)} + ' Prescriptions'">0 Prescriptions</span>
+                </div>
+            </div>
             <div class="card-body" style="padding:0;">
                 <div class="table-container">
                     <table>
@@ -59,56 +115,58 @@
                             <tr>
                                 <th>Rx #</th>
                                 <th>Date</th>
-                                <th>Patient</th>
+                                <th>Patient Details</th>
                                 <th>Prescribing Doctor</th>
                                 <th>Diagnosis</th>
                                 <th>Medicines Prescribed</th>
                                 <th>Status</th>
-                                <th class="text-right">Actions</th>
+                                <th style="text-align:right;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr th:each="rx : ${prescriptions}">
                                 <td>
-                                    <strong style="color:var(--primary); font-family:monospace; font-size:14px;" th:text="${rx.prescriptionNumber}">RX-2026-1001</strong>
-                                </td>
-                                <td th:text="${rx.prescriptionDate}">2026-10-08</td>
-                                <td>
-                                    <div style="font-weight:600;" th:text="${rx.patient.fullName}">Patient Name</div>
-                                    <small class="text-muted" th:text="'Age: ' + ${rx.patient.age} + ' | ' + ${rx.patient.gender}">32 | Male</small>
+                                    <a th:href="@{/prescriptions/view/{id}(id=${rx.id})}" style="color:var(--primary); font-family:monospace; font-weight:700; font-size:14px; text-decoration:none;" th:text="${rx.prescriptionNumber}">RX-2026-1001</a>
                                 </td>
                                 <td>
-                                    <div style="font-weight:600;" th:text="${rx.doctor.fullName}">Dr. Sharma</div>
-                                    <small class="text-muted" th:text="${rx.doctor.specialization}">Cardiology</small>
+                                    <div style="font-weight:500;" th:text="${rx.prescriptionDate}">2026-10-08</div>
                                 </td>
                                 <td>
-                                    <span class="badge" style="background:var(--primary-light); color:var(--primary-text); font-weight:600;" th:text="${rx.diagnosis}">Diagnosis</span>
+                                    <a th:href="@{/patients/view/{id}(id=${rx.patient.id})}" style="font-weight:600; color:var(--text-primary); text-decoration:none;" th:text="${rx.patient.fullName}">Patient Name</a>
+                                    <div style="font-size:12px; color:var(--text-muted);" th:text="'PID: ' + ${rx.patient.patientId} + ' | ' + ${rx.patient.gender} + ', ' + ${rx.patient.age} + 'y'">PID: 1001</div>
+                                </td>
+                                <td>
+                                    <a th:href="@{/doctors/view/{id}(id=${rx.doctor.id})}" style="font-weight:600; color:var(--text-primary); text-decoration:none;" th:text="'Dr. ' + ${rx.doctor.fullName}">Dr. Sharma</a>
+                                    <div style="font-size:12px; color:var(--text-muted);" th:text="${rx.doctor.specialization}">Cardiology</div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-occupied" style="font-weight:600;" th:text="${rx.diagnosis}">Diagnosis</span>
                                 </td>
                                 <td>
                                     <div style="display:flex; flex-direction:column; gap:4px;">
                                         <div th:each="item, stat : ${rx.items}" th:if="${stat.index < 2}">
-                                            <span style="font-size:12px; font-weight:500;" th:text="${item.medicineName}">Med</span>
+                                            <span style="font-size:12px; font-weight:600;" th:text="${item.medicineName}">Med</span>
                                             <span class="text-muted" style="font-size:11px;" th:text="'(' + ${item.dosage} + ', ' + ${item.frequency} + ')'">1-0-1</span>
                                         </div>
                                         <span th:if="${#lists.size(rx.items) > 2}" class="text-muted" style="font-size:11px;" th:text="'+ ' + (${#lists.size(rx.items)} - 2) + ' more...'">+ 1 more</span>
                                     </div>
                                 </td>
                                 <td>
-                                    <span th:if="${rx.status == 'Dispensed'}" class="badge badge-paid">
+                                    <span th:if="${rx.status == 'Dispensed'}" class="badge badge-available">
                                         <i class='bx bx-check-double'></i> Dispensed
                                     </span>
                                     <span th:if="${rx.status == 'Active'}" class="badge badge-pending">
                                         <i class='bx bx-time'></i> Ready to Dispense
                                     </span>
-                                    <span th:if="${rx.status != 'Active' and rx.status != 'Dispensed'}" class="badge badge-scheduled" th:text="${rx.status}">Status</span>
+                                    <span th:if="${rx.status != 'Active' and rx.status != 'Dispensed'}" class="badge badge-maintenance" th:text="${rx.status}">Status</span>
                                 </td>
-                                <td class="text-right">
+                                <td style="text-align:right;">
                                     <div class="btn-group">
-                                        <a th:href="@{/prescriptions/view/{id}(id=${rx.id})}" class="btn btn-sm btn-primary" title="View & Print Rx Slip">
-                                            <i class='bx bx-show'></i> View Rx
+                                        <a th:href="@{/prescriptions/view/{id}(id=${rx.id})}" class="btn btn-sm btn-outline" title="View &amp; Print Rx Slip">
+                                            <i class='bx bx-file'></i>
                                         </a>
                                         <form th:if="${rx.status == 'Active'}" th:action="@{/prescriptions/dispense/{id}(id=${rx.id})}" method="post" style="display:inline;" onsubmit="return confirm('Dispense medications and deduct pharmacy stock?');">
-                                            <button type="submit" class="btn btn-sm btn-success" title="Dispense & Bill in Pharmacy">
+                                            <button type="submit" class="btn btn-sm btn-primary" title="Dispense &amp; Bill in Pharmacy">
                                                 <i class='bx bxs-capsule'></i> Dispense
                                             </button>
                                         </form>
@@ -120,13 +178,18 @@
                             </tr>
                             <tr th:if="${#lists.isEmpty(prescriptions)}">
                                 <td colspan="8">
-                                    <div class="empty-state">
-                                        <div class="empty-icon">📝</div>
-                                        <h3>No prescriptions found</h3>
-                                        <p class="text-muted">Start by drafting a new digital prescription for a patient.</p>
-                                        <a th:href="@{/prescriptions/add}" class="btn btn-primary mt-2">
-                                            <i class='bx bx-plus'></i> Write Prescription
-                                        </a>
+                                    <div class="empty-state" style="padding:48px 20px; text-align:center;">
+                                        <div class="empty-icon" style="font-size:42px; margin-bottom:12px;">📝</div>
+                                        <h3 style="margin-bottom:6px;">No prescriptions found</h3>
+                                        <p class="text-muted" style="margin-bottom:16px;">Start by drafting a new digital prescription for a patient.</p>
+                                        <div style="display:flex; justify-content:center; gap:10px;">
+                                            <a th:href="@{/prescriptions}" class="btn btn-outline" th:if="${search != null or selectedStatus != null}">
+                                                <i class='bx bx-reset'></i> Clear Filters
+                                            </a>
+                                            <a th:href="@{/prescriptions/add}" class="btn btn-primary">
+                                                <i class='bx bx-plus'></i> Write Prescription
+                                            </a>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>

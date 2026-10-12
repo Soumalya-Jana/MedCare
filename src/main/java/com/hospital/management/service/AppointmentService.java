@@ -80,6 +80,11 @@ public class AppointmentService {
     }
 
     @Transactional(readOnly = true)
+    public long countAll() {
+        return appointmentRepo.count();
+    }
+
+    @Transactional(readOnly = true)
     public long countTodaysAppointments() {
         return appointmentRepo.countTodaysAppointments();
     }

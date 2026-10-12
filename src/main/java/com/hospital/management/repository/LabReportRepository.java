@@ -8,6 +8,7 @@ import java.util.List;
 @Repository
 public interface LabReportRepository extends JpaRepository<LabReport, Long> {
     List<LabReport> findByPatientId(Long patientId);
+    List<LabReport> findByPatientIdOrderByTestDateDesc(Long patientId);
     List<LabReport> findByDoctorId(Long doctorId);
     List<LabReport> findByStatus(String status);
     List<LabReport> findByTestCategory(String testCategory);

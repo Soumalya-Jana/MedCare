@@ -1,56 +1,194 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout :: head}"></head>
 <body>
 <div th:replace="~{layout :: layout(~{::content})}">
     <div th:fragment="content">
-        <div class="page-header">
-            <h1><i class='bx bxs-calendar-check mr-1'></i> Appointments</h1>
+
+        <!-- Top Header & Actions -->
+        <div class="page-header appointment-hero">
+            <div>
+                <h1><i class='bx bxs-calendar-check mr-1 text-primary'></i> Appointments Operations Dashboard</h1>
+                <p class="text-muted" style="margin-top:4px;">Real-time consultation schedule, patient OPD queue &amp; clinical bookings</p>
+            </div>
             <div class="page-actions">
-                <a th:href="@{/appointments/add}" class="btn btn-primary"><i class='bx bx-plus'></i> New Appointment</a>
+                <a th:href="@{/appointments/add}" class="btn btn-primary">
+                    <i class='bx bx-calendar-plus'></i> Book New Appointment
+                </a>
             </div>
         </div>
 
-        <!-- Status Filter -->
-        <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
-            <a th:href="@{/appointments}" class="btn btn-sm" th:classappend="${selectedStatus == null} ? 'btn-primary' : 'btn-outline'">All</a>
-            <a th:href="@{/appointments(status='Scheduled')}" class="btn btn-sm" th:classappend="${selectedStatus == 'Scheduled'} ? 'btn-primary' : 'btn-outline'">Scheduled</a>
-            <a th:href="@{/appointments(status='Completed')}" class="btn btn-sm" th:classappend="${selectedStatus == 'Completed'} ? 'btn-primary' : 'btn-outline'">Completed</a>
-            <a th:href="@{/appointments(status='Cancelled')}" class="btn btn-sm" th:classappend="${selectedStatus == 'Cancelled'} ? 'btn-primary' : 'btn-outline'">Cancelled</a>
+        <!-- 4 Key Operational Metrics Cards -->
+        <div class="stats-grid" style="margin-bottom:24px;">
+            <div class="stat-card">
+                <div class="stat-icon icon-blue"><i class='bx bx-time-five'></i></div>
+                <div class="stat-info">
+                    <h3 th:text="${todaysAppointmentsCount}">0</h3>
+                    <p>Today's Consultations</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon icon-purple"><i class='bx bxs-calendar'></i></div>
+                <div class="stat-info">
+                    <h3 th:text="${scheduledCount}">0</h3>
+                    <p>Scheduled &amp; In Queue</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon icon-green"><i class='bx bxs-check-circle'></i></div>
+                <div class="stat-info">
+                    <h3 th:text="${completedCount}">0</h3>
+                    <p>Completed Visits</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon icon-amber"><i class='bx bx-calendar-x'></i></div>
+                <div class="stat-info">
+                    <h3 th:text="${cancelledCount}">0</h3>
+                    <p>Cancelled Appointments</p>
+                </div>
+            </div>
         </div>
 
+        <!-- Filter & Doctor Selection Bar -->
+        <div class="card mb-3" style="padding:16px 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                <!-- Filter Pills -->
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <a th:href="@{/appointments(filter='today', doctorId=${selectedDoctorId})}"
+                       class="btn btn-sm" th:classappend="${selectedFilter == 'today' ? 'btn-primary' : 'btn-outline'}">
+                        <i class='bx bx-calendar-star'></i> Today's Schedule (<span th:text="${todaysAppointmentsCount}">0</span>)
+                    </a>
+                    <a th:href="@{/appointments(doctorId=${selectedDoctorId})}"
+                       class="btn btn-sm" th:classappend="${selectedFilter == null and selectedStatus == null ? 'btn-primary' : 'btn-outline'}">
+                        All (<span th:text="${totalAppointments}">0</span>)
+                    </a>
+                    <a th:href="@{/appointments(status='Scheduled', doctorId=${selectedDoctorId})}"
+                       class="btn btn-sm" th:classappend="${selectedStatus == 'Scheduled' ? 'btn-primary' : 'btn-outline'}">
+                        Scheduled (<span th:text="${scheduledCount}">0</span>)
+                    </a>
+                    <a th:href="@{/appointments(status='Completed', doctorId=${selectedDoctorId})}"
+                       class="btn btn-sm" th:classappend="${selectedStatus == 'Completed' ? 'btn-primary' : 'btn-outline'}">
+                        Completed (<span th:text="${completedCount}">0</span>)
+                    </a>
+                    <a th:href="@{/appointments(status='Cancelled', doctorId=${selectedDoctorId})}"
+                       class="btn btn-sm" th:classappend="${selectedStatus == 'Cancelled' ? 'btn-primary' : 'btn-outline'}">
+                        Cancelled (<span th:text="${cancelledCount}">0</span>)
+                    </a>
+                </div>
+
+                <!-- Doctor Filter Dropdown -->
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="text-muted" style="font-size:13px; font-weight:600;"><i class='bx bxs-user-badge'></i> Doctor:</span>
+                    <select class="form-control" style="width:auto; padding:6px 12px; font-size:13px;"
+                            onchange="location.href=this.value">
+                        <option th:value="@{/appointments(status=${selectedStatus}, filter=${selectedFilter})}"
+                                th:selected="${selectedDoctorId == null}">All Doctors</option>
+                        <option th:each="doc : ${doctors}"
+                                th:value="@{/appointments(doctorId=${doc.id}, status=${selectedStatus}, filter=${selectedFilter})}"
+                                th:text="'Dr. ' + ${doc.fullName} + ' (' + ${doc.specialization} + ')'"
+                                th:selected="${selectedDoctorId != null and selectedDoctorId == doc.id}">
+                            Dr. Sharma
+                        </option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointments Table -->
         <div class="card">
             <div class="card-body" style="padding:0;">
                 <div class="table-container">
                     <table>
-                        <thead><tr><th>#</th><th>Date</th><th>Time</th><th>Patient</th><th>Doctor</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Ref #</th>
+                                <th>Schedule Date &amp; Time</th>
+                                <th>Patient Name</th>
+                                <th>Consulting Doctor</th>
+                                <th>Chief Complaint / Reason</th>
+                                <th>Status</th>
+                                <th class="text-right">Clinical Actions</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            <tr th:each="apt, stat : ${appointments}">
-                                <td th:text="${stat.index + 1}">1</td>
-                                <td th:text="${apt.appointmentDate}">2026-10-06</td>
-                                <td th:text="${apt.appointmentTime}">10:00</td>
-                                <td th:text="${apt.patient.fullName}">Patient</td>
-                                <td th:text="${apt.doctor.fullName}">Doctor</td>
-                                <td th:text="${apt.reason}">Reason</td>
+                            <tr th:each="apt : ${appointments}">
+                                <td>
+                                    <a th:href="@{/appointments/view/{id}(id=${apt.id})}"
+                                       style="font-family:monospace; font-weight:700; color:var(--primary);"
+                                       th:text="'#APT-' + ${apt.id}">#APT-1</a>
+                                </td>
+                                <td>
+                                    <div style="font-weight:700; color:var(--text-primary);" th:text="${apt.appointmentTime}">10:00</div>
+                                    <div style="font-size:12px; color:var(--text-muted);" th:text="${apt.appointmentDate}">2026-10-06</div>
+                                </td>
+                                <td>
+                                    <a th:href="@{/patients/view/{id}(id=${apt.patient.id})}"
+                                       style="font-weight:700; color:var(--text-primary); text-decoration:none;"
+                                       th:text="${apt.patient.fullName}">Patient Name</a>
+                                    <div style="font-size:12px; color:var(--text-muted);" th:text="${apt.patient.patientId}">PID-1001</div>
+                                </td>
+                                <td>
+                                    <a th:href="@{/doctors/view/{id}(id=${apt.doctor.id})}"
+                                       style="font-weight:600; color:var(--primary); text-decoration:none;"
+                                       th:text="'Dr. ' + ${apt.doctor.fullName}">Dr. Sharma</a>
+                                    <div style="font-size:12px; color:var(--text-muted);" th:text="${apt.doctor.specialization}">Cardiology</div>
+                                </td>
+                                <td th:text="${apt.reason != null and !#strings.isEmpty(apt.reason) ? apt.reason : 'General Consultation'}">Reason</td>
                                 <td>
                                     <span class="badge" th:classappend="${apt.status == 'Scheduled'} ? 'badge-scheduled' : (${apt.status == 'Completed'} ? 'badge-completed' : (${apt.status == 'Cancelled'} ? 'badge-cancelled' : 'badge-in-progress'))" th:text="${apt.status}">Status</span>
                                 </td>
-                                <td>
-                                    <div class="btn-group">
-                                        <a th:href="@{/appointments/edit/{id}(id=${apt.id})}" class="btn btn-sm btn-outline" title="Edit"><i class='bx bx-edit'></i></a>
-                                        <a th:if="${apt.status == 'Scheduled'}" th:href="@{/appointments/complete/{id}(id=${apt.id})}" class="btn btn-sm btn-success" title="Complete"><i class='bx bx-check'></i></a>
-                                        <a th:if="${apt.status == 'Scheduled'}" th:href="@{/appointments/cancel/{id}(id=${apt.id})}" class="btn btn-sm btn-danger" title="Cancel"><i class='bx bx-x'></i></a>
-                                        <a th:href="@{/appointments/delete/{id}(id=${apt.id})}" class="btn btn-sm btn-danger" onclick="return confirm('Delete?')"><i class='bx bx-trash'></i></a>
+                                <td class="text-right">
+                                    <div class="btn-group" style="justify-content:flex-end;">
+                                        <a th:href="@{/appointments/view/{id}(id=${apt.id})}" class="btn btn-sm btn-outline" title="View Consultation">
+                                            <i class='bx bx-show'></i> View
+                                        </a>
+                                        <a th:href="@{/prescriptions/add(appointmentId=${apt.id},patientId=${apt.patient.id})}"
+                                           class="btn btn-sm btn-primary" title="Write Prescription (Rx)"
+                                           style="background:#6366f1; border-color:#6366f1;">
+                                            <i class='bx bx-notepad'></i> Rx
+                                        </a>
+                                        <a th:if="${apt.status == 'Scheduled'}"
+                                           th:href="@{/appointments/complete/{id}(id=${apt.id})}"
+                                           class="btn btn-sm btn-success" title="Mark Completed">
+                                            <i class='bx bx-check'></i>
+                                        </a>
+                                        <a th:if="${apt.status == 'Scheduled'}"
+                                           th:href="@{/appointments/cancel/{id}(id=${apt.id})}"
+                                           class="btn btn-sm btn-danger" title="Cancel Appointment">
+                                            <i class='bx bx-x'></i>
+                                        </a>
+                                        <a th:href="@{/appointments/edit/{id}(id=${apt.id})}" class="btn btn-sm btn-outline" title="Edit">
+                                            <i class='bx bx-edit'></i>
+                                        </a>
+                                        <a th:href="@{/appointments/delete/{id}(id=${apt.id})}" class="btn btn-sm btn-danger"
+                                           onclick="return confirm('Delete this appointment record?')" title="Delete">
+                                            <i class='bx bx-trash'></i>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(appointments)}">
-                                <td colspan="8"><div class="empty-state"><div class="empty-icon">📅</div><h3>No appointments found</h3></div></td>
+                                <td colspan="7">
+                                    <div class="empty-state">
+                                        <div class="empty-icon">📅</div>
+                                        <h3>No appointments found matching this view</h3>
+                                        <p class="text-muted">Schedule an appointment or select another filter view.</p>
+                                        <a th:href="@{/appointments/add}" class="btn btn-primary" style="margin-top:12px;">
+                                            <i class='bx bx-calendar-plus'></i> Schedule Appointment
+                                        </a>
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 </body>

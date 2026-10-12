@@ -58,6 +58,27 @@ public class BillingService {
         return billRepo.save(bill);
     }
 
+    public Bill recordPayment(Long billId, Double amount, String paymentMethod) {
+        Bill bill = findById(billId);
+        double currentPaid = bill.getPaidAmount() != null ? bill.getPaidAmount() : 0.0;
+        double newPaid = currentPaid + (amount != null ? amount : 0.0);
+        bill.setPaidAmount(newPaid);
+
+        if (paymentMethod != null && !paymentMethod.trim().isEmpty()) {
+            bill.setPaymentMethod(paymentMethod);
+        }
+
+        if (bill.getPaidAmount() >= bill.getTotalAmount()) {
+            bill.setStatus("Paid");
+        } else if (bill.getPaidAmount() > 0) {
+            bill.setStatus("Partial");
+        } else {
+            bill.setStatus("Pending");
+        }
+
+        return billRepo.save(bill);
+    }
+
     public void deleteById(Long id) {
         if (!billRepo.existsById(id)) {
             throw new RuntimeException("Bill not found with ID: " + id);
