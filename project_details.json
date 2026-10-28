@@ -1,0 +1,1032 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "project_metadata": {
+    "project_name": "MedCare - Hospital Management System (HMS)",
+    "application_name": "Hospital Management System",
+    "version": "1.0.0",
+    "artifact_id": "hospital-management-system",
+    "group_id": "com.hospital",
+    "description": "An enterprise-grade, full-stack Hospital Management System designed to digitize healthcare workflows, clinical operations, inpatient care, emergency triage, electronic prescriptions, diagnostics, pharmacy inventory, and billing.",
+    "repository": "https://github.com/ujjwalsharma52/Hospital-Management-System.git",
+    "source_directory": "d:\\Hospital Management System",
+    "license": "MIT",
+    "java_version": "17+",
+    "spring_boot_version": "3.2.5"
+  },
+  "system_architecture": {
+    "architecture_pattern": "3-Tier Enterprise Web Application (MVC)",
+    "architectural_layers": [
+      {
+        "layer": "Presentation Tier (Frontend)",
+        "components": [
+          "Thymeleaf 3 Server-Side Template Engine",
+          "HTML5 Semantic Structure",
+          "Vanilla CSS3 Custom Dark Glassmorphic Design System",
+          "Chart.js 4.x Interactive Dashboards",
+          "Boxicons 2.1 Vector Icon Suite",
+          "JavaScript (ES6+) Dynamic Telemetry & Interactivity"
+        ],
+        "responsibility": "Renders responsive, role-based views, handles client-side telemetry rendering, and submits form/REST payloads."
+      },
+      {
+        "layer": "Application / Business Logic Tier (Backend)",
+        "components": [
+          "Spring Boot 3.2.5 (Embedded Apache Tomcat on Port 8080)",
+          "Spring MVC Web Controllers (11 Controllers)",
+          "Spring Security 6 with DaoAuthenticationProvider & BCrypt",
+          "Spring Data JPA & Hibernate 6 ORM",
+          "Service Layer (12 Business Services)",
+          "Data Transfer Objects (DTOs) & Global Exception Handling"
+        ],
+        "responsibility": "Executes domain workflows, access control verification, financial calculations, vital telemetry evaluation, and transactional management."
+      },
+      {
+        "layer": "Persistence Tier (Database)",
+        "components": [
+          "MySQL 8.0+ / MariaDB 10.4+",
+          "Aiven Cloud Managed MySQL or Local XAMPP MySQL Instance",
+          "Spring Data JPA Repositories (12 Interface Repositories)",
+          "Relational Schema (18 Relational SQL Tables & Analytical Views)"
+        ],
+        "responsibility": "Ensures ACID-compliant transactional persistence for medical, clinical, financial, and administrative records."
+      }
+    ],
+    "design_patterns_used": [
+      "Model-View-Controller (MVC)",
+      "Repository Pattern (Spring Data JPA)",
+      "Service-Oriented Architecture (Domain Services)",
+      "Data Transfer Object (DTO Pattern)",
+      "Role-Based Access Control (RBAC)",
+      "Dependency Injection / Inversion of Control (IoC)",
+      "Builder Pattern (Lombok-style custom static builders in entities)",
+      "Global Controller Advice / Exception Handling"
+    ]
+  },
+  "technology_stack": {
+    "backend_frameworks": {
+      "framework": "Spring Boot 3.2.5",
+      "language": "Java 17 (Compatible with JDK 17 to JDK 25)",
+      "web_server": "Embedded Apache Tomcat (Port 8080)",
+      "security_framework": "Spring Security 6 (BCrypt, Custom UserDetailsService, Role Authentication Provider)",
+      "persistence_orm": "Spring Data JPA / Hibernate 6",
+      "validation": "Hibernate Validator / Jakarta Validation 3.0",
+      "file_io": "Spring Multipart File Upload & NIO Path Storage"
+    },
+    "frontend_technologies": {
+      "template_engine": "Thymeleaf (with Thymeleaf Extras Spring Security 6)",
+      "styling": "Vanilla CSS3 with CSS Custom Properties (Variables), Flexbox, CSS Grid, and Glassmorphism",
+      "charting_engine": "Chart.js (Doughnut, Curved Area, and Bar charts)",
+      "iconography": "Boxicons (boxicons.min.css)",
+      "fonts": "Inter, Outfit, System UI Sans-Serif",
+      "interactivity": "Vanilla JavaScript ES6+ (Live ECG canvas simulation, darkroom image viewer, modal popups, real-time analytics polling)"
+    },
+    "database_technologies": {
+      "primary_database": "MySQL 8.0+ / MariaDB",
+      "driver": "com.mysql.cj.jdbc.Driver (MySQL Connector/J)",
+      "cloud_provider": "Aiven Cloud MySQL Service",
+      "local_provider": "XAMPP MySQL / MariaDB (Port 3306)",
+      "schema_management": "Hibernate DDL Auto (`update`) & Standalone SQL Dump (`Hospital_Management_Database_PUBLIC.sql`)"
+    },
+    "build_and_dev_tools": {
+      "build_tool": "Apache Maven 3.9+ / Maven Wrapper (mvnw, mvnw.cmd)",
+      "compiler_arguments": "-parameters",
+      "hot_reload": "Spring Boot DevTools (Optional Runtime Scope)",
+      "scripting": "run.bat (Windows 1-click startup automation)"
+    }
+  },
+  "environment_and_configuration": {
+    "configuration_file": "src/main/resources/application.properties",
+    "properties": {
+      "spring.application.name": "Hospital Management System",
+      "server.port": 8080,
+      "spring.datasource.url": "${DB_URL:jdbc:mysql://localhost:3306/hospital_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}",
+      "spring.datasource.username": "${DB_USERNAME:root}",
+      "spring.datasource.password": "${DB_PASSWORD:}",
+      "spring.datasource.driver-class-name": "com.mysql.cj.jdbc.Driver",
+      "spring.jpa.hibernate.ddl-auto": "${DDL_AUTO:update}",
+      "spring.jpa.show-sql": false,
+      "spring.jpa.properties.hibernate.format_sql": true,
+      "spring.thymeleaf.cache": false,
+      "spring.thymeleaf.prefix": "classpath:/templates/",
+      "spring.thymeleaf.suffix": ".html",
+      "spring.servlet.multipart.max-file-size": "10MB",
+      "spring.servlet.multipart.max-request-size": "10MB",
+      "app.upload.dir": "uploads/lab-reports",
+      "logging.level.org.springframework.security": "INFO",
+      "logging.level.com.hospital": "DEBUG"
+    }
+  },
+  "user_roles_and_access_control": {
+    "role_system": "Role-Based Access Control (RBAC) via Spring Security",
+    "roles": [
+      {
+        "role_name": "ROLE_ADMIN",
+        "description": "Hospital Executive & System Administrator. Has full system configuration, staff onboarding, doctor directories, financial oversight, bed allocations, inventory monitoring, and complete access to all modules.",
+        "default_login_route": "/login/admin",
+        "default_register_route": "/register/admin",
+        "landing_dashboard": "/dashboard/admin",
+        "demo_credentials": {
+          "username": "admin",
+          "password": "admin123"
+        }
+      },
+      {
+        "role_name": "ROLE_DOCTOR",
+        "description": "Consulting Physician / Specialist Doctor. Accesses clinical dashboard, appointments queue, electronic health records, diagnosis drafting, digital e-prescribing (Rx), diagnostic lab requests, and emergency trauma triage.",
+        "default_login_route": "/login/doctor",
+        "default_register_route": "/register/doctor",
+        "landing_dashboard": "/dashboard/doctor",
+        "demo_credentials": {
+          "username": "dr.sharma",
+          "password": "doctor123"
+        }
+      },
+      {
+        "role_name": "ROLE_RECEPTIONIST",
+        "description": "Front Desk & Admissions Staff. Handles patient intake & demographics, OPD appointment booking, IPD ward & bed allocations, patient discharges, invoice generation, and payment collections.",
+        "default_login_route": "/login/receptionist",
+        "default_register_route": "/register/receptionist",
+        "landing_dashboard": "/dashboard/receptionist",
+        "demo_credentials": {
+          "username": "reception",
+          "password": "reception123"
+        }
+      }
+    ],
+    "authentication_features": [
+      "Unified Central Auth Hub (`/login` and `/register`) with role selector cards",
+      "Dedicated role-isolated login portals (`/login/admin`, `/login/doctor`, `/login/receptionist`)",
+      "Dedicated role-isolated self-registration portals (`/register/admin`, `/register/doctor`, `/register/receptionist`)",
+      "Role-mismatch isolation guarding against unauthorized portal crossovers",
+      "BCrypt password hashing for credentials in the database",
+      "Stateful HTTP session management with JSESSIONID and secure invalidation on logout",
+      "Custom 403 Access Denied handler (`/access-denied`)"
+    ]
+  },
+  "core_modules": [
+    {
+      "module_id": "MOD-01",
+      "name": "Authentication, Registration & User Management",
+      "description": "Multi-portal authentication system with role-specific login and registration pipelines, BCrypt password hashing, session control, and user profile management.",
+      "key_features": [
+        "Unified Auth Hub with glassmorphic role selector cards",
+        "Dedicated portals for Administrator, Doctor, and Receptionist logins",
+        "Self-registration flows creating linked User and Doctor entities",
+        "Role mismatch detection and automatic redirection",
+        "Automated database seeding on initial boot via DataInitializer"
+      ]
+    },
+    {
+      "module_id": "MOD-02",
+      "name": "Executive & Role-Based Dashboards & Analytics",
+      "description": "Dynamic analytical command center delivering real-time hospital KPIs, revenue forecasting, bed occupancy monitoring, and interactive Chart.js visualizations.",
+      "key_features": [
+        "Executive Admin Dashboard with hospital-wide financial, clinical, and operational metrics",
+        "Specialist Doctor Dashboard with daily consultation schedules, pending lab reports, and patient stats",
+        "Receptionist Front Desk Dashboard with rapid patient search, appointment check-ins, and ward occupancy",
+        "Chart.js interactive visualizations: 6-month revenue trends, bed occupancy doughnut, appointment pipeline",
+        "REST API endpoint (`/api/analytics/summary`) for live telemetry polling",
+        "Emergency broadcast ribbon alerting clinicians of active Code Red trauma cases"
+      ]
+    },
+    {
+      "module_id": "MOD-03",
+      "name": "Patient Management & Electronic Health Records (EHR)",
+      "description": "Comprehensive demographic and longitudinal clinical record system for inpatient and outpatient populations.",
+      "key_features": [
+        "Patient registration with auto-generated hospital identification numbers",
+        "Demographic tracking: DOB, gender, blood group, emergency contacts, full address",
+        "Medical history and chronic allergy recording with visual badges",
+        "360-degree patient dossier viewing appointments, prescriptions, admissions, lab tests, and billing history",
+        "Real-time search and status filtering (Active / Inactive)"
+      ]
+    },
+    {
+      "module_id": "MOD-04",
+      "name": "Doctor Management & Clinical Directory",
+      "description": "Medical specialist cataloging, department classification, consulting fee management, and weekly availability scheduling.",
+      "key_features": [
+        "Physician profile directory with qualifications, specializations, contact details, and assigned OPD room",
+        "Weekly schedule management (available days and consulting time slots)",
+        "Consultation fee configuration for automated billing generation",
+        "Linkage between Spring Security User accounts and clinical Doctor entities",
+        "Filtering by medical department and active/leave availability status"
+      ]
+    },
+    {
+      "module_id": "MOD-05",
+      "name": "Appointment Scheduling & OPD Workflow",
+      "description": "Real-time outpatient consultation booking connecting patients with specialist doctors.",
+      "key_features": [
+        "OPD booking interface with date and time slot assignment",
+        "Conflict avoidance and doctor-specific appointment pipelines",
+        "Status workflow lifecycle: Scheduled -> Completed / Cancelled",
+        "Direct one-click transition from completed appointment to prescription drafting",
+        "Today's appointments quick filter and doctor-specific queueing"
+      ]
+    },
+    {
+      "module_id": "MOD-06",
+      "name": "Bed, Ward & Inpatient (IPD) Admission Management",
+      "description": "Complete inpatient facility management overseeing ward configurations, bed occupancy tracking, admissions, and discharge summaries.",
+      "key_features": [
+        "Ward management supporting multiple ward categories (General, ICU, CCU, Private Suite, Maternity, Emergency)",
+        "Real-time bed tracking with status indicators (Available, Occupied, Maintenance) and daily room rates",
+        "Inpatient admission recording linking patient, bed, attending physician, and admission date",
+        "Discharge workflow calculating room charges and recording discharge notes and follow-up advice",
+        "Print-ready Inpatient Discharge Summary report generation"
+      ]
+    },
+    {
+      "module_id": "MOD-07",
+      "name": "Pharmacy & Medicine Inventory Management",
+      "description": "Pharmaceutical inventory control system managing medication stocks, batches, pricing, and automated restock workflows.",
+      "key_features": [
+        "Comprehensive medicine master catalog (brand name, generic name, category, manufacturer)",
+        "Stock quantity tracking, reorder thresholds, and unit pricing",
+        "Batch number and expiration date tracking with shelf-life alerts",
+        "Automatic Low-Stock and Out-of-Stock alert banners",
+        "1-Click Quick Restock Modal with preset inventory increments (+10, +50, +100 units)"
+      ]
+    },
+    {
+      "module_id": "MOD-08",
+      "name": "Laboratory, Diagnostics & Medical Imaging",
+      "description": "Diagnostic test ordering, pathology result reporting, and medical scan archiving with darkroom radiographic viewer.",
+      "key_features": [
+        "Diagnostic test catalog spanning Blood, Urine, Biochemistry, X-Ray, CT, MRI, Ultrasound, ECG, and Pathology",
+        "Diagnostic reading logging with reference normal ranges and clinical remarks",
+        "Digital scan and file attachment support (Chest X-Rays, Brain MRIs, Pathology PDFs)",
+        "Integrated Darkroom Radiography Scan Viewer with high-contrast presentation for radiological scans",
+        "Secure binary file streaming and downloading via FileStorageService (`/lab/download/{id}`)",
+        "Quick modal-based upload and removal of radiological attachments"
+      ]
+    },
+    {
+      "module_id": "MOD-09",
+      "name": "Digital Prescriptions (Rx) & E-Prescribing",
+      "description": "Clinical prescription drafting, medication schedule configuration, vital sign capture, and automated pharmacy dispensing.",
+      "key_features": [
+        "Structured clinical Rx generation: chief complaints, diagnosis, symptoms, clinical vitals, general advice",
+        "Multi-item prescription scheduling: medication selection, dosage, frequency (e.g. 1-0-1), duration, instructions",
+        "Auto-generated unique prescription numbers (e.g. `RX-20261011-001`)",
+        "Print-ready Doctor's Rx Slip with hospital branding and signature block",
+        "1-Click Pharmacy Dispensing: automatically deducts medicine stock and creates a pending pharmacy bill"
+      ]
+    },
+    {
+      "module_id": "MOD-10",
+      "name": "Billing, Invoicing & Financial Settlement",
+      "description": "Automated healthcare billing calculating consultation, medication, diagnostic, and room charges with partial and full payment recording.",
+      "key_features": [
+        "Comprehensive invoice builder itemizing doctor consultation, pharmacy drugs, lab tests, and room stay charges",
+        "Itemized bill line-item support (BillItem) with quantities, unit prices, and tax/discount calculations",
+        "Payment status lifecycle: Pending -> Partial -> Paid",
+        "Multi-channel payment recording: Cash, Credit/Debit Card, UPI, Health Insurance",
+        "Printable hospital invoice with breakdown and balance due calculation",
+        "Revenue analytics tracking total billed, total collected, and outstanding receivables"
+      ]
+    },
+    {
+      "module_id": "MOD-11",
+      "name": "Emergency, Trauma & Manchester Triage Command Center",
+      "description": "High-acuity 24/7 trauma intake command center implementing 5-level Manchester Triage protocol, real-time vitals telemetry, continuous ECG rhythm simulation, and ICU escalations.",
+      "key_features": [
+        "24/7 Rapid Emergency Trauma Intake supporting registered patients or unidentified walk-in/unconscious trauma victims",
+        "5-Level Manchester Triage protocol: Code Red (Immediate/Resuscitation), Code Orange (Very Urgent), Code Yellow (Urgent), Code Green (Standard), Code Blue (Non-Urgent)",
+        "Real-time biometric vital telemetry tracking: BP, Heart Rate, SpO2, Respiratory Rate, Temp, Glasgow Coma Scale (GCS 3-15), Blood Glucose, Pain Score (1-10)",
+        "Live animated continuous Lead II ECG rhythm oscilloscope canvas in glassmorphic monitor",
+        "Fast resuscitation intervention logging and treatment timeline recording",
+        "Seamless 1-click bed escalation to ICU or emergency observation wards",
+        "Persistent emergency broadcast banner across executive dashboards for Code Red emergencies"
+      ]
+    }
+  ],
+  "data_models_and_entities": [
+    {
+      "entity_name": "User",
+      "table_name": "users",
+      "package": "com.hospital.management.model",
+      "description": "System authentication and authorization user account.",
+      "fields": [
+        { "name": "id", "type": "Long", "is_primary_key": true, "nullable": false },
+        { "name": "username", "type": "String", "unique": true, "nullable": false, "length": 50 },
+        { "name": "password", "type": "String", "nullable": false, "note": "BCrypt Encrypted" },
+        { "name": "fullName", "type": "String", "nullable": false, "length": 100 },
+        { "name": "email", "type": "String", "unique": true, "nullable": false, "length": 100 },
+        { "name": "phone", "type": "String", "length": 20 },
+        { "name": "role", "type": "Role (Enum: ADMIN, DOCTOR, RECEPTIONIST)", "nullable": false },
+        { "name": "enabled", "type": "Boolean", "default": true },
+        { "name": "createdAt", "type": "LocalDateTime" },
+        { "name": "updatedAt", "type": "LocalDateTime" }
+      ],
+      "relationships": [
+        { "target_entity": "Doctor", "type": "OneToOne (Optional)", "mapped_by": "user" }
+      ]
+    },
+    {
+      "entity_name": "Patient",
+      "table_name": "patients",
+      "package": "com.hospital.management.model",
+      "description": "Patient demographic and clinical background record.",
+      "fields": [
+        { "name": "id", "type": "Long", "is_primary_key": true, "nullable": false },
+        { "name": "patientId", "type": "String", "unique": true, "nullable": false, "length": 30 },
+        { "name": "fullName", "type": "String", "nullable": false, "length": 100 },
+        { "name": "dateOfBirth", "type": "LocalDate", "nullable": false },
+        { "name": "gender", "type": "String", "nullable": false, "length": 10 },
+        { "name": "phone", "type": "String", "nullable": false, "length": 20 },
+        { "name": "email", "type": "String", "length": 100 },
+        { "name": "address", "type": "String", "length": 255 },
+        { "name": "bloodGroup", "type": "String", "length": 10 },
+        { "name": "allergies", "type": "String", "length": 500 },
+        { "name": "medicalHistory", "type": "String", "length": 1000 },
+        { "name": "emergencyContactName", "type": "String", "length": 100 },
+        { "name": "emergencyContactPhone", "type": "String", "length": 20 },
+        { "name": "status", "type": "String", "default": "Active", "length": 20 },
+        { "name": "registeredAt", "type": "LocalDateTime" },
+        { "name": "updatedAt", "type": "LocalDateTime" }
+      ],
+      "relationships": [
+        { "target_entity": "Appointment", "type": "OneToMany", "mapped_by": "patient" },
+        { "target_entity": "Prescription", "type": "OneToMany", "mapped_by": "patient" },
+        { "target_entity": "LabReport", "type": "OneToMany", "mapped_by": "patient" },
+        { "target_entity": "Bill", "type": "OneToMany", "mapped_by": "patient" },
+        { "target_entity": "Bed", "type": "OneToMany", "mapped_by": "patient" },
+        { "target_entity": "EmergencyCase", "type": "OneToMany", "mapped_by": "patient" }
+      ]
+    },
+    {
+      "entity_name": "Doctor",
+      "table_name": "doctors",
+      "package": "com.hospital.management.model",
+      "description": "Medical specialist and consulting physician entity.",
+      "fields": [
+        { "name": "id", "type": "Long", "is_primary_key": true, "nullable": false },
+        { "name": "fullName", "type": "String", "nullable": false, "length": 100 },
+        { "name": "specialization", "type": "String", "nullable": false, "length": 100 },
+        { "name": "qualification", "type": "String", "length": 100 },
+        { "name": "phone", "type": "String", "nullable": false, "length": 20 },
+        { "name": "email", "type": "String", "length": 100 },
+        { "name": "consultationFee", "type": "Double", "default": 500.0 },
+        { "name": "department", "type": "String", "length": 100 },
+        { "name": "status", "type": "String", "default": "Active", "length": 20 },
+        { "name": "roomNumber", "type": "String", "length": 20 },
+        { "name": "experienceYears", "type": "Integer" },
+        { "name": "availableDays", "type": "String", "length": 100 },
+        { "name": "availableTimeStart", "type": "String", "length": 20 },
+        { "name": "availableTimeEnd", "type": "String", "length": 20 },
+        { "name": "createdAt", "type": "LocalDateTime" },
+        { "name": "updatedAt", "type": "LocalDateTime" }
+      ],
+      "relationships": [
+        { "target_entity": "User", "type": "OneToOne", "join_column": "user_id" },
+        { "target_entity": "Appointment", "type": "OneToMany", "mapped_by": "doctor" },
+        { "target_entity": "Prescription", "type": "OneToMany", "mapped_by": "doctor" },
+        { "target_entity": "LabReport", "type": "OneToMany", "mapped_by": "doctor" }
+      ]
+    },
+    {
+      "entity_name": "Appointment",
+      "table_name": "appointments",
+      "package": "com.hospital.management.model",
+      "description": "Consultation booking between a patient and a doctor.",
+      "fields": [
+        { "name": "id", "type": "Long", "is_primary_key": true, "nullable": false },
+        { "name": "appointmentDate", "type": "LocalDate", "nullable": false },
+        { "name": "appointmentTime", "type": "LocalTime", "nullable": false },
+        { "name": "reason", "type": "String", "length": 255 },
+        { "name": "notes", "type": "String", "length": 500 },
+        { "name": "status", "type": "String", "default": "Scheduled", "length": 20 },
+        { "name": "createdAt", "type": "LocalDateTime" },
+        { "name": "updatedAt", "type": "LocalDateTime" }
+      ],
+      "relationships": [
+        { "target_entity": "Patient", "type": "ManyToOne", "join_column": "patient_id", "nullable": false },
+        { "target_entity": "Doctor", "type": "ManyToOne", "join_column": "doctor_id", "nullable": false }
+      ]
+    },
+    {
+      "entity_name": "Ward",
+      "table_name": "wards",
+      "package": "com.hospital.management.model",
+      "description": "Hospital department ward grouping beds.",
+      "fields": [
+        { "name": "id", "type": "Long", "is_primary_key": true, "nullable": false },
+        { "name": "wardName", "type": "String", "nullable": false, "length": 100 },
+        { "name": "wardType", "type": "String", "nullable": false, "length": 50 },
+        { "name": "totalBeds", "type": "Integer", "nullable": false },
+        { "name": "floorNumber", "type": "Integer" },
+        { "name": "description", "type": "String", "length": 255 },
+        { "name": "createdAt", "type": "LocalDateTime" }
+      ],
+      "relationships": [
+        { "target_entity": "Bed", "type": "OneToMany", "mapped_by": "ward" }
+      ]
+    },
+    {
+      "entity_name": "Bed",
+      "table_name": "beds",
+      "package": "com.hospital.management.model",
+      "description": "Individual bed within a hospital ward.",
+      "fields": [
+        { "name": "id", "type": "Long", "is_primary_key": true, "nullable": false },
+        { "name": "bedNumber", "type": "String", "nullable": false, "length": 20 },
+        { "name": "status", "type": "String", "default": "Available", "length": 20 },
+        { "name": "dailyRate", "type": "Double", "default": 0.0 },
+        { "name": "admissionDate", "type": "LocalDateTime" },
+        { "name": "dischargeDate", "type": "LocalDateTime" },
+        { "name": "createdAt", "type": "LocalDateTime" }
+      ],
+      "relationships": [
+        { "target_entity": "Ward", "type": "ManyToOne", "join_column": "ward_id", "nullable": false },
+        { "target_entity": "Patient", "type": "ManyToOne", "join_column": "patient_id" }
+      ]
+    },
+    {
+      "entity_name": "InpatientAdmission",
+      "table_name": "inpatient_admissions",
+      "package": "com.hospital.management.model",
+      "description": "Historical record of completed or active inpatient admissions.",
+      "fields": [
+        { "name": "id", "type": "Long", "is_primary_key": true, "nullable": false },
+        { "name": "bedNumber", "type": "String", "length": 50 },
+        { "name": "wardName", "type": "String", "length": 100 },
+        { "name": "wardType", "type": "String", "length": 50 },
+        { "name": "admissionDate", "type": "LocalDateTime", "nullable": false },
+        { "name": "dischargeDate", "type": "LocalDateTime" },
+        { "name": "dischargeNotes", "type": "String", "length": 1000 },
+        { "name": "followUpAdvice", "type": "String", "length": 1000 },
+        { "name": "attendingDoctorName", "type": "String", "length": 100 },
+        { "name": "createdAt", "type": "LocalDateTime" }
+      ],
+      "relationships": [
+        { "target_entity": "Patient", "type": "ManyToOne", "join_column": "patient_id", "nullable": false },
+        { "target_entity": "Bed", "type": "ManyToOne", "join_column": "bed_id" },
+        { "target_entity": "Bill", "type": "OneToOne", "join_column": "bill_id" }
+      ]
+    },
+    {
+      "entity_name": "Medicine",
+      "table_name": "medicines",
+      "package": "com.hospital.management.model",
+      "description": "Pharmaceutical product in pharmacy inventory.",
+      "fields": [
+        { "name": "id", "type": "Long", "is_primary_key": true, "nullable": false },
+        { "name": "name", "type": "String", "nullable": false, "length": 100 },
+        { "name": "genericName", "type": "String", "length": 100 },
+        { "name": "category", "type": "String", "length": 50 },
+        { "name": "manufacturer", "type": "String", "length": 100 },
+        { "name": "price", "type": "Double", "nullable": false },
+        { "name": "stockQuantity", "type": "Integer", "nullable": false },
+        { "name": "reorderLevel", "type": "Integer", "default": 10 },
+        { "name": "batchNumber", "type": "String", "length": 50 },
+        { "name": "expiryDate", "type": "LocalDateTime" },
+        { "name": "description", "type": "String", "length": 255 },
+        { "name": "createdAt", "type": "LocalDateTime" },
+        { "name": "updatedAt", "type": "LocalDateTime" }
+      ],
+      "relationships": [
+        { "target_entity": "PrescriptionItem", "type": "OneToMany", "mapped_by": "medicine" }
+      ]
+    },
+    {
+      "entity_name": "Prescription",
+      "table_name": "prescriptions",
+      "package": "com.hospital.management.model",
+      "description": "Doctor's digital prescription order.",
+      "fields": [
+        { "name": "id", "type": "Long", "is_primary_key": true, "nullable": false },
+        { "name": "prescriptionNumber", "type": "String", "unique": true, "nullable": false, "length": 30 },
+        { "name": "diagnosis", "type": "String", "length": 500 },
+        { "name": "symptoms", "type": "String", "length": 500 },
+        { "name": "vitals", "type": "String", "length": 255 },
+        { "name": "advice", "type": "String", "length": 1000 },
+        { "name": "followUpDate", "type": "LocalDate" },
+        { "name": "prescriptionDate", "type": "LocalDate" },
+        { "name": "status", "type": "String", "default": "Active", "length": 20 },
+        { "name": "createdAt", "type": "LocalDateTime" },
+        { "name": "updatedAt", "type": "LocalDateTime" }
+      ],
+      "relationships": [
+        { "target_entity": "Patient", "type": "ManyToOne", "join_column": "patient_id", "nullable": false },
+        { "target_entity": "Doctor", "type": "ManyToOne", "join_column": "doctor_id", "nullable": false },
+        { "target_entity": "Appointment", "type": "ManyToOne", "join_column": "appointment_id" },
+        { "target_entity": "PrescriptionItem", "type": "OneToMany", "mapped_by": "prescription", "cascade": "ALL" }
+      ]
+    },
+    {
+      "entity_name": "PrescriptionItem",
+      "table_name": "prescription_items",
+      "package": "com.hospital.management.model",
+      "description": "Specific medication item and dosing schedule on a prescription.",
+      "fields": [
+        { "name": "id", "type": "Long", "is_primary_key": true, "nullable": false },
+        { "name": "medicineName", "type": "String", "length": 100 },
+        { "name": "dosage", "type": "String", "length": 50 },
+        { "name": "frequency", "type": "String", "length": 50 },
+        { "name": "duration", "type": "String", "length": 50 },
+        { "name": "instructions", "type": "String", "length": 255 },
+        { "name": "quantity", "type": "Integer", "default": 1 }
+      ],
+      "relationships": [
+        { "target_entity": "Prescription", "type": "ManyToOne", "join_column": "prescription_id", "nullable": false },
+        { "target_entity": "Medicine", "type": "ManyToOne", "join_column": "medicine_id" }
+      ]
+    },
+    {
+      "entity_name": "LabReport",
+      "table_name": "lab_reports",
+      "package": "com.hospital.management.model",
+      "description": "Diagnostic test order, pathology report, and attached medical scan.",
+      "fields": [
+        { "name": "id", "type": "Long", "is_primary_key": true, "nullable": false },
+        { "name": "testName", "type": "String", "nullable": false, "length": 100 },
+        { "name": "testCategory", "type": "String", "length": 50 },
+        { "name": "result", "type": "String", "length": 1000 },
+        { "name": "normalRange", "type": "String", "length": 100 },
+        { "name": "remarks", "type": "String", "length": 500 },
+        { "name": "cost", "type": "Double", "default": 0.0 },
+        { "name": "status", "type": "String", "default": "Pending", "length": 20 },
+        { "name": "testDate", "type": "LocalDateTime" },
+        { "name": "reportDate", "type": "LocalDateTime" },
+        { "name": "attachmentFileName", "type": "String", "length": 255 },
+        { "name": "attachmentFileType", "type": "String", "length": 100 },
+        { "name": "attachmentFilePath", "type": "String", "length": 500 },
+        { "name": "attachmentFileSize", "type": "Long" },
+        { "name": "createdAt", "type": "LocalDateTime" }
+      ],
+      "relationships": [
+        { "target_entity": "Patient", "type": "ManyToOne", "join_column": "patient_id", "nullable": false },
+        { "target_entity": "Doctor", "type": "ManyToOne", "join_column": "doctor_id" }
+      ]
+    },
+    {
+      "entity_name": "Bill",
+      "table_name": "bills",
+      "package": "com.hospital.management.model",
+      "description": "Patient hospital billing account and invoice.",
+      "fields": [
+        { "name": "id", "type": "Long", "is_primary_key": true, "nullable": false },
+        { "name": "consultationFee", "type": "Double", "default": 0.0 },
+        { "name": "medicineCost", "type": "Double", "default": 0.0 },
+        { "name": "labTestCost", "type": "Double", "default": 0.0 },
+        { "name": "roomCharges", "type": "Double", "default": 0.0 },
+        { "name": "otherCharges", "type": "Double", "default": 0.0 },
+        { "name": "discount", "type": "Double", "default": 0.0 },
+        { "name": "tax", "type": "Double", "default": 0.0 },
+        { "name": "totalAmount", "type": "Double", "default": 0.0 },
+        { "name": "paidAmount", "type": "Double", "default": 0.0 },
+        { "name": "paymentMethod", "type": "String", "default": "Cash", "length": 50 },
+        { "name": "status", "type": "String", "default": "Pending", "length": 20 },
+        { "name": "description", "type": "String", "length": 500 },
+        { "name": "createdAt", "type": "LocalDateTime" },
+        { "name": "updatedAt", "type": "LocalDateTime" }
+      ],
+      "relationships": [
+        { "target_entity": "Patient", "type": "ManyToOne", "join_column": "patient_id", "nullable": false },
+        { "target_entity": "BillItem", "type": "OneToMany", "mapped_by": "bill", "cascade": "ALL" }
+      ]
+    },
+    {
+      "entity_name": "BillItem",
+      "table_name": "bill_items",
+      "package": "com.hospital.management.model",
+      "description": "Itemized line item on a medical bill.",
+      "fields": [
+        { "name": "id", "type": "Long", "is_primary_key": true, "nullable": false },
+        { "name": "description", "type": "String", "nullable": false, "length": 255 },
+        { "name": "category", "type": "String", "length": 50 },
+        { "name": "quantity", "type": "Integer", "default": 1 },
+        { "name": "unitPrice", "type": "Double", "default": 0.0 },
+        { "name": "totalPrice", "type": "Double", "default": 0.0 }
+      ],
+      "relationships": [
+        { "target_entity": "Bill", "type": "ManyToOne", "join_column": "bill_id", "nullable": false }
+      ]
+    },
+    {
+      "entity_name": "EmergencyCase",
+      "table_name": "emergency_cases",
+      "package": "com.hospital.management.model",
+      "description": "Acute trauma case, Manchester Triage status, and continuous vital telemetry.",
+      "fields": [
+        { "name": "id", "type": "Long", "is_primary_key": true, "nullable": false },
+        { "name": "caseNumber", "type": "String", "unique": true, "nullable": false, "length": 30 },
+        { "name": "isUnidentified", "type": "Boolean", "default": false },
+        { "name": "temporaryIdentifier", "type": "String", "length": 255 },
+        { "name": "patientName", "type": "String", "nullable": false, "length": 150 },
+        { "name": "age", "type": "Integer" },
+        { "name": "gender", "type": "String", "length": 20 },
+        { "name": "contactPhone", "type": "String", "length": 150 },
+        { "name": "triageLevel", "type": "String (CODE_RED, CODE_ORANGE, CODE_YELLOW, CODE_GREEN, CODE_BLUE)", "default": "CODE_RED", "length": 30 },
+        { "name": "triagePriority", "type": "Integer", "default": 1 },
+        { "name": "status", "type": "String (TRIAGED, IN_RESUSCITATION, UNDER_OBSERVATION, ADMITTED_ICU, ADMITTED_WARD, DISCHARGED_STABLE, TRANSFERRED_OUT)", "default": "TRIAGED", "length": 30 },
+        { "name": "arrivalDateTime", "type": "LocalDateTime" },
+        { "name": "triageNurse", "type": "String", "length": 100 },
+        { "name": "bayNumber", "type": "String", "length": 50 },
+        { "name": "bloodPressure", "type": "String", "length": 30 },
+        { "name": "heartRate", "type": "Integer" },
+        { "name": "respiratoryRate", "type": "Integer" },
+        { "name": "oxygenSaturation", "type": "Double" },
+        { "name": "temperature", "type": "Double" },
+        { "name": "glasgowComaScale", "type": "Integer" },
+        { "name": "bloodGlucose", "type": "Integer" },
+        { "name": "painScore", "type": "Integer" },
+        { "name": "chiefComplaint", "type": "String", "length": 1000 },
+        { "name": "triageNotes", "type": "String", "length": 2000 },
+        { "name": "emergencyTreatmentGiven", "type": "String", "length": 2000 },
+        { "name": "disposition", "type": "String", "length": 100 },
+        { "name": "dispositionNotes", "type": "String", "length": 1000 },
+        { "name": "dispositionDateTime", "type": "LocalDateTime" },
+        { "name": "createdAt", "type": "LocalDateTime" },
+        { "name": "updatedAt", "type": "LocalDateTime" }
+      ],
+      "relationships": [
+        { "target_entity": "Patient", "type": "ManyToOne", "join_column": "patient_id", "nullable": true },
+        { "target_entity": "Doctor", "type": "ManyToOne", "join_column": "doctor_id" },
+        { "target_entity": "Bed", "type": "ManyToOne", "join_column": "admitted_bed_id" }
+      ]
+    }
+  ],
+  "database_schema_relational": {
+    "sql_source_file": "Hospital_Management_Database_PUBLIC.sql",
+    "total_tables": 18,
+    "table_list": [
+      {
+        "table_name": "users",
+        "description": "User accounts with encrypted passwords and roles (ADMIN, DOCTOR, STAFF, PATIENT)."
+      },
+      {
+        "table_name": "departments",
+        "description": "Clinical and medical specialty departments (Cardiology, Neurology, Pediatrics, etc.)."
+      },
+      {
+        "table_name": "doctors",
+        "description": "Doctor profiles with department foreign keys, room numbers, and fees."
+      },
+      {
+        "table_name": "staff",
+        "description": "Hospital support staff, receptionists, technicians, and administrators."
+      },
+      {
+        "table_name": "patients",
+        "description": "Patient profiles, medical histories, blood groups, and allergies."
+      },
+      {
+        "table_name": "rooms",
+        "description": "Hospital rooms with room types (ICU, General, Private) and daily charges."
+      },
+      {
+        "table_name": "beds",
+        "description": "Individual bed allocation records within rooms."
+      },
+      {
+        "table_name": "appointments",
+        "description": "Outpatient appointments scheduled between doctors and patients."
+      },
+      {
+        "table_name": "medical_records",
+        "description": "Clinical consultation notes, symptoms, diagnoses, and treatment notes."
+      },
+      {
+        "table_name": "prescriptions",
+        "description": "Doctor prescriptions linked to appointments and diagnoses."
+      },
+      {
+        "table_name": "prescription_items",
+        "description": "Individual medications prescribed with dosage, frequency, and instructions."
+      },
+      {
+        "table_name": "medicines",
+        "description": "Pharmaceutical stock with batch numbers, quantities, prices, and expiry dates."
+      },
+      {
+        "table_name": "lab_tests",
+        "description": "Catalog of available laboratory and diagnostic tests with baseline fees."
+      },
+      {
+        "table_name": "lab_reports",
+        "description": "Diagnostic reports, test readings, reference intervals, and doctor remarks."
+      },
+      {
+        "table_name": "admissions",
+        "description": "Inpatient admissions recording room, bed, admitting doctor, and reason."
+      },
+      {
+        "table_name": "discharges",
+        "description": "Discharge records recording discharge summaries, medical advice, and dates."
+      },
+      {
+        "table_name": "bills",
+        "description": "Consolidated hospital invoices for IPD and OPD services."
+      },
+      {
+        "table_name": "payments",
+        "description": "Financial payment receipts recording payment methods, dates, and amounts."
+      }
+    ]
+  },
+  "api_and_web_routes": [
+    {
+      "controller": "AuthController",
+      "routes": [
+        { "method": "GET", "path": "/login", "access": "Public", "description": "Central Login Hub with multi-role portal cards" },
+        { "method": "GET", "path": "/login/admin", "access": "Public", "description": "Dedicated Administrator Login Portal" },
+        { "method": "GET", "path": "/login/doctor", "access": "Public", "description": "Dedicated Doctor / Physician Login Portal" },
+        { "method": "GET", "path": "/login/receptionist", "access": "Public", "description": "Dedicated Front Desk / Receptionist Login Portal" },
+        { "method": "POST", "path": "/login", "access": "Public", "description": "Spring Security credential authentication and portal role isolation handler" },
+        { "method": "GET", "path": "/logout", "access": "Authenticated", "description": "Invalidates session and clears security context" },
+        { "method": "GET", "path": "/register", "access": "Public", "description": "Central Registration Hub with role choices" },
+        { "method": "GET", "path": "/register/admin", "access": "Public", "description": "Administrator self-registration portal" },
+        { "method": "POST", "path": "/register/admin", "access": "Public", "description": "Processes Administrator account creation" },
+        { "method": "GET", "path": "/register/doctor", "access": "Public", "description": "Doctor self-registration portal with specialization and room fields" },
+        { "method": "POST", "path": "/register/doctor", "access": "Public", "description": "Processes Doctor account and linked clinical profile creation" },
+        { "method": "GET", "path": "/register/receptionist", "access": "Public", "description": "Receptionist / Front Desk registration portal" },
+        { "method": "POST", "path": "/register/receptionist", "access": "Public", "description": "Processes Receptionist account creation" },
+        { "method": "GET", "path": "/access-denied", "access": "Public", "description": "403 Forbidden Access Denied warning view" }
+      ]
+    },
+    {
+      "controller": "DashboardController",
+      "routes": [
+        { "method": "GET", "path": "/", "access": "Authenticated", "description": "Root entry point: intelligently routes user to role dashboard based on authorities" },
+        { "method": "GET", "path": "/dashboard", "access": "Authenticated", "description": "Intelligent role-based dashboard router" },
+        { "method": "GET", "path": "/dashboard/admin", "access": "ROLE_ADMIN", "description": "Admin Executive Dashboard with real-time KPI metrics and financial charts" },
+        { "method": "GET", "path": "/dashboard/doctor", "access": "ROLE_DOCTOR, ROLE_ADMIN", "description": "Clinical Physician Dashboard with appointments, patient queue, and lab alerts" },
+        { "method": "GET", "path": "/dashboard/receptionist", "access": "ROLE_RECEPTIONIST, ROLE_ADMIN", "description": "Front Desk Dashboard with quick registrations, bed occupancy, and billing" },
+        { "method": "GET", "path": "/api/analytics/summary", "access": "Authenticated", "description": "REST API returning JSON summary of hospital KPIs for live telemetry and chart refreshes" }
+      ]
+    },
+    {
+      "controller": "PatientController",
+      "base_path": "/patients",
+      "routes": [
+        { "method": "GET", "path": "/patients", "access": "Authenticated", "description": "Lists all registered patients with search and gender/status filters" },
+        { "method": "GET", "path": "/patients/add", "access": "Authenticated", "description": "Displays patient registration form" },
+        { "method": "POST", "path": "/patients/save", "access": "Authenticated", "description": "Saves new patient or updates existing patient record" },
+        { "method": "GET", "path": "/patients/view/{id}", "access": "Authenticated", "description": "Displays 360-degree patient clinical dossier with full medical history" },
+        { "method": "GET", "path": "/patients/edit/{id}", "access": "Authenticated", "description": "Displays pre-populated edit form for a patient" },
+        { "method": "GET", "path": "/patients/delete/{id}", "access": "ROLE_ADMIN", "description": "Deletes a patient record from the database" }
+      ]
+    },
+    {
+      "controller": "DoctorController",
+      "base_path": "/doctors",
+      "routes": [
+        { "method": "GET", "path": "/doctors", "access": "Authenticated", "description": "Displays medical specialist directory with department filters" },
+        { "method": "GET", "path": "/doctors/add", "access": "ROLE_ADMIN", "description": "Displays new doctor onboarding form" },
+        { "method": "POST", "path": "/doctors/save", "access": "ROLE_ADMIN", "description": "Saves doctor profile, schedule, and consulting fee" },
+        { "method": "GET", "path": "/doctors/view/{id}", "access": "Authenticated", "description": "Displays physician profile with appointment schedule and statistics" },
+        { "method": "GET", "path": "/doctors/edit/{id}", "access": "ROLE_ADMIN", "description": "Displays edit form for doctor credentials and schedule" },
+        { "method": "GET", "path": "/doctors/delete/{id}", "access": "ROLE_ADMIN", "description": "Removes doctor from directory" }
+      ]
+    },
+    {
+      "controller": "AppointmentController",
+      "base_path": "/appointments",
+      "routes": [
+        { "method": "GET", "path": "/appointments", "access": "Authenticated", "description": "Lists scheduled appointments with status and doctor filters" },
+        { "method": "GET", "path": "/appointments/book", "access": "Authenticated", "description": "Displays appointment booking form" },
+        { "method": "POST", "path": "/appointments/save", "access": "Authenticated", "description": "Persists new appointment booking" },
+        { "method": "GET", "path": "/appointments/view/{id}", "access": "Authenticated", "description": "Displays detailed appointment overview with action shortcuts" },
+        { "method": "GET", "path": "/appointments/complete/{id}", "access": "Authenticated", "description": "Marks appointment as Completed and offers Rx generation" },
+        { "method": "GET", "path": "/appointments/cancel/{id}", "access": "Authenticated", "description": "Marks appointment as Cancelled" },
+        { "method": "GET", "path": "/appointments/delete/{id}", "access": "ROLE_ADMIN", "description": "Deletes appointment record" }
+      ]
+    },
+    {
+      "controller": "BedController",
+      "base_path": "/beds",
+      "routes": [
+        { "method": "GET", "path": "/beds", "access": "Authenticated", "description": "Lists all inpatient beds with ward and occupancy filters" },
+        { "method": "GET", "path": "/beds/add", "access": "ROLE_ADMIN, ROLE_RECEPTIONIST", "description": "Displays bed creation and ward assignment form" },
+        { "method": "POST", "path": "/beds/save", "access": "ROLE_ADMIN, ROLE_RECEPTIONIST", "description": "Saves bed configuration and daily rate" },
+        { "method": "GET", "path": "/beds/discharge/{id}", "access": "Authenticated", "description": "Displays patient discharge form and summary calculator" },
+        { "method": "POST", "path": "/beds/discharge/{id}", "access": "Authenticated", "description": "Processes discharge, frees bed, and generates discharge record" },
+        { "method": "GET", "path": "/beds/discharge-summary/{id}", "access": "Authenticated", "description": "Renders printable Inpatient Discharge Summary report" },
+        { "method": "GET", "path": "/beds/wards", "access": "Authenticated", "description": "Lists hospital wards and bed capacity breakdown" },
+        { "method": "GET", "path": "/beds/wards/add", "access": "ROLE_ADMIN", "description": "Displays new ward configuration form" },
+        { "method": "POST", "path": "/beds/wards/save", "access": "ROLE_ADMIN", "description": "Saves new hospital ward" }
+      ]
+    },
+    {
+      "controller": "PharmacyController",
+      "base_path": "/pharmacy",
+      "routes": [
+        { "method": "GET", "path": "/pharmacy", "access": "Authenticated", "description": "Lists pharmaceutical inventory with low-stock warnings" },
+        { "method": "GET", "path": "/pharmacy/add", "access": "ROLE_ADMIN, ROLE_RECEPTIONIST", "description": "Displays medicine cataloging form" },
+        { "method": "POST", "path": "/pharmacy/save", "access": "ROLE_ADMIN, ROLE_RECEPTIONIST", "description": "Saves medicine product, batch, and unit pricing" },
+        { "method": "POST", "path": "/pharmacy/restock/{id}", "access": "Authenticated", "description": "Quick-restocks medicine with specified inbound quantity" },
+        { "method": "GET", "path": "/pharmacy/delete/{id}", "access": "ROLE_ADMIN", "description": "Deletes medicine from pharmacy inventory" }
+      ]
+    },
+    {
+      "controller": "LabReportController",
+      "base_path": "/lab",
+      "routes": [
+        { "method": "GET", "path": "/lab", "access": "Authenticated", "description": "Lists clinical lab diagnostic reports and scan records" },
+        { "method": "GET", "path": "/lab/add", "access": "Authenticated", "description": "Displays diagnostic test order form with attachment support" },
+        { "method": "POST", "path": "/lab/save", "access": "Authenticated", "description": "Saves lab test results, reference intervals, and attached scan files" },
+        { "method": "GET", "path": "/lab/view/{id}", "access": "Authenticated", "description": "Displays detailed diagnostic report with Darkroom Radiography viewer" },
+        { "method": "GET", "path": "/lab/attachment/{id}", "access": "Authenticated", "description": "Streams raw scan attachment for inline viewing" },
+        { "method": "GET", "path": "/lab/download/{id}", "access": "Authenticated", "description": "Downloads diagnostic scan attachment with proper Content-Disposition header" },
+        { "method": "POST", "path": "/lab/quick-upload/{id}", "access": "Authenticated", "description": "Uploads radiological scan to existing lab report via modal" },
+        { "method": "POST", "path": "/lab/remove-attachment/{id}", "access": "Authenticated", "description": "Deletes attachment from report and storage disk" },
+        { "method": "GET", "path": "/lab/delete/{id}", "access": "ROLE_ADMIN", "description": "Deletes lab test record" }
+      ]
+    },
+    {
+      "controller": "PrescriptionController",
+      "base_path": "/prescriptions",
+      "routes": [
+        { "method": "GET", "path": "/prescriptions", "access": "Authenticated", "description": "Lists digital prescriptions with dispense status tracking" },
+        { "method": "GET", "path": "/prescriptions/add", "access": "ROLE_DOCTOR, ROLE_ADMIN", "description": "Displays dynamic e-prescription drafting form" },
+        { "method": "POST", "path": "/prescriptions/save", "access": "ROLE_DOCTOR, ROLE_ADMIN", "description": "Saves digital prescription and itemized medication schedules" },
+        { "method": "GET", "path": "/prescriptions/view/{id}", "access": "Authenticated", "description": "Displays printable Doctor's Rx Slip with hospital branding" },
+        { "method": "POST", "path": "/prescriptions/dispense/{id}", "access": "Authenticated", "description": "Dispenses medicines, deducts pharmacy stock, and generates billing item" },
+        { "method": "GET", "path": "/prescriptions/delete/{id}", "access": "ROLE_ADMIN", "description": "Deletes prescription" }
+      ]
+    },
+    {
+      "controller": "BillingController",
+      "base_path": "/billing",
+      "routes": [
+        { "method": "GET", "path": "/billing", "access": "Authenticated", "description": "Lists hospital bills and invoices with revenue summary metrics" },
+        { "method": "GET", "path": "/billing/add", "access": "Authenticated", "description": "Displays invoice creation form with multi-service charge breakdown" },
+        { "method": "POST", "path": "/billing/save", "access": "Authenticated", "description": "Saves invoice and calculates net charges after tax and discount" },
+        { "method": "GET", "path": "/billing/view/{id}", "access": "Authenticated", "description": "Displays printable hospital invoice and payment receipt" },
+        { "method": "POST", "path": "/billing/pay/{id}", "access": "Authenticated", "description": "Records partial or full financial payment against an invoice" },
+        { "method": "GET", "path": "/billing/delete/{id}", "access": "ROLE_ADMIN", "description": "Deletes invoice record" }
+      ]
+    },
+    {
+      "controller": "EmergencyController",
+      "base_path": "/emergency",
+      "routes": [
+        { "method": "GET", "path": "/emergency", "access": "Authenticated", "description": "Live ER Trauma Command Center & Manchester Triage Queue Board" },
+        { "method": "GET", "path": "/emergency/intake", "access": "Authenticated", "description": "Rapid trauma intake form for walk-ins or unidentified patients" },
+        { "method": "POST", "path": "/emergency/intake", "access": "Authenticated", "description": "Submits emergency intake, assigns Manchester Triage level and priority" },
+        { "method": "GET", "path": "/emergency/case/{id}", "access": "Authenticated", "description": "Displays trauma case detail with animated continuous ECG rhythm monitor and telemetry" },
+        { "method": "POST", "path": "/emergency/case/{id}/update-vitals", "access": "Authenticated", "description": "Updates telemetry vitals (BP, HR, SpO2, RR, Temp, GCS, Glucose)" },
+        { "method": "POST", "path": "/emergency/case/{id}/update-status", "access": "Authenticated", "description": "Updates trauma case status lifecycle (Resuscitation, Observation, Discharge)" },
+        { "method": "POST", "path": "/emergency/case/{id}/admit", "access": "Authenticated", "description": "Directly escalates emergency case to an available ICU or ward bed" },
+        { "method": "POST", "path": "/emergency/case/{id}/delete", "access": "ROLE_ADMIN", "description": "Removes emergency case record" }
+      ]
+    }
+  ],
+  "ui_and_templates_catalog": {
+    "total_templates": 38,
+    "template_groups": [
+      {
+        "group_name": "Shared & Global Layouts",
+        "templates": [
+          { "path": "templates/layout.html", "description": "Master glassmorphic layout wrapping navigation, header, user avatar, and footer" },
+          { "path": "templates/dashboard.html", "description": "Legacy unified dashboard template" },
+          { "path": "templates/login.html", "description": "Standard login redirect view" },
+          { "path": "templates/access-denied.html", "description": "403 Access Denied glassmorphic error view with navigation back" },
+          { "path": "templates/error.html", "description": "General application error boundary" }
+        ]
+      },
+      {
+        "group_name": "Authentication & Onboarding Portals",
+        "templates": [
+          { "path": "templates/auth/login-hub.html", "description": "Central multi-role login selection hub" },
+          { "path": "templates/auth/login-admin.html", "description": "Dedicated Administrator sign-in portal" },
+          { "path": "templates/auth/login-doctor.html", "description": "Dedicated Consulting Doctor sign-in portal" },
+          { "path": "templates/auth/login-receptionist.html", "description": "Dedicated Front Desk / Receptionist sign-in portal" },
+          { "path": "templates/auth/register-hub.html", "description": "Central registration selection hub" },
+          { "path": "templates/auth/register-admin.html", "description": "Administrator self-registration portal" },
+          { "path": "templates/auth/register-doctor.html", "description": "Doctor registration portal with clinical fields" },
+          { "path": "templates/auth/register-receptionist.html", "description": "Receptionist registration portal" }
+        ]
+      },
+      {
+        "group_name": "Role-Specific Dashboards",
+        "templates": [
+          { "path": "templates/dashboard/admin.html", "description": "Administrator command center with revenue trends, bed doughnut, and KPI cards" },
+          { "path": "templates/dashboard/doctor.html", "description": "Clinical Physician dashboard with today's consultations, appointments queue, and lab results" },
+          { "path": "templates/dashboard/receptionist.html", "description": "Front Desk dashboard with patient admissions, appointments, and bed tracking" }
+        ]
+      },
+      {
+        "group_name": "Patient Management",
+        "templates": [
+          { "path": "templates/patients/list.html", "description": "Registered patients directory with live search and status filters" },
+          { "path": "templates/patients/form.html", "description": "Patient intake and edit form with medical history" },
+          { "path": "templates/patients/view.html", "description": "360-degree patient clinical dossier with multi-tab history" }
+        ]
+      },
+      {
+        "group_name": "Doctor Directory",
+        "templates": [
+          { "path": "templates/doctors/list.html", "description": "Medical specialist catalog with department filtering and availability indicators" },
+          { "path": "templates/doctors/form.html", "description": "Doctor profile registration and schedule assignment form" },
+          { "path": "templates/doctors/view.html", "description": "Physician profile page with upcoming appointments and consultation fee" }
+        ]
+      },
+      {
+        "group_name": "Appointment Scheduling",
+        "templates": [
+          { "path": "templates/appointments/list.html", "description": "Appointment schedule table with status filters and quick actions" },
+          { "path": "templates/appointments/form.html", "description": "Appointment booking form linking patient and specialist doctor" },
+          { "path": "templates/appointments/view.html", "description": "Appointment summary card with clinical transition shortcuts" }
+        ]
+      },
+      {
+        "group_name": "Bed & Ward Management",
+        "templates": [
+          { "path": "templates/beds/list.html", "description": "Inpatient bed grid and list with occupancy badges" },
+          { "path": "templates/beds/form.html", "description": "Bed configuration and patient allocation form" },
+          { "path": "templates/beds/discharge.html", "description": "Inpatient discharge form with room fee calculation" },
+          { "path": "templates/beds/discharge-summary.html", "description": "Print-ready Inpatient Discharge Summary report" },
+          { "path": "templates/beds/wards.html", "description": "Ward capacity overview and distribution" },
+          { "path": "templates/beds/ward-form.html", "description": "Hospital ward creation form" }
+        ]
+      },
+      {
+        "group_name": "Pharmacy Inventory",
+        "templates": [
+          { "path": "templates/pharmacy/list.html", "description": "Medication stock inventory with low-stock badges and 1-click restock modal" },
+          { "path": "templates/pharmacy/form.html", "description": "Medicine product registration and pricing form" }
+        ]
+      },
+      {
+        "group_name": "Laboratory & Medical Imaging",
+        "templates": [
+          { "path": "templates/lab/list.html", "description": "Diagnostic reports table with category filters and scan attachment badges" },
+          { "path": "templates/lab/form.html", "description": "Diagnostic test entry form with scan file upload" },
+          { "path": "templates/lab/view.html", "description": "Printable lab report with Darkroom Radiography scan viewer" }
+        ]
+      },
+      {
+        "group_name": "Prescriptions (Rx)",
+        "templates": [
+          { "path": "templates/prescriptions/list.html", "description": "Prescription registry with dispense status tracking" },
+          { "path": "templates/prescriptions/form.html", "description": "Electronic Rx drafting form with dynamic medication line-items" },
+          { "path": "templates/prescriptions/view.html", "description": "Print-ready Doctor's Rx Slip with dosage instructions and signature" }
+        ]
+      },
+      {
+        "group_name": "Billing & Invoicing",
+        "templates": [
+          { "path": "templates/billing/list.html", "description": "Hospital invoice list with revenue metrics and payment status filters" },
+          { "path": "templates/billing/form.html", "description": "Invoice builder with consultation, pharmacy, lab, and room fee inputs" },
+          { "path": "templates/billing/view.html", "description": "Printable official hospital bill receipt with balance calculation" }
+        ]
+      },
+      {
+        "group_name": "Emergency, Trauma & Manchester Triage",
+        "templates": [
+          { "path": "templates/emergency/board.html", "description": "ER Command Center with 5-color Manchester Triage queue and urgent action buttons" },
+          { "path": "templates/emergency/form.html", "description": "Rapid trauma intake form with biometric telemetry input" },
+          { "path": "templates/emergency/view.html", "description": "Trauma telemetry monitor with live ECG rhythm canvas, vital dials, and ICU escalation" }
+        ]
+      }
+    ]
+  },
+  "static_assets_and_design_system": {
+    "css_stylesheet": "src/main/resources/static/css/style.css",
+    "theme_javascript": "src/main/resources/static/js/theme.js",
+    "design_characteristics": [
+      "Dark glassmorphic aesthetic using backdrop-filter blur and semi-transparent RGBA borders",
+      "Vibrant semantic color coding: Emergency Red (#ef4444), Amber (#f59e0b), Emerald Green (#10b981), Cyan (#06b6d4), Violet (#8b5cf6)",
+      "Darkroom Radiography viewer for high-contrast viewing of X-Ray, CT, and MRI scans",
+      "Lead II continuous ECG simulated canvas animation with pulsing heart rate audio-visual feedback",
+      "Print-optimized stylesheets (`@media print`) hiding navigational chrome on Rx slips, invoices, and discharge summaries"
+    ],
+    "hero_and_branding_images": [
+      "hospital-atrium-hero.jpg",
+      "hospital-emergency-hero.jpg",
+      "hospital-lab-hero.jpg",
+      "hospital-pharmacy-hero.jpg",
+      "hospital-ward-hero.jpg",
+      "modern-clinical-center.jpg",
+      "modern-hospital-atrium.jpg"
+    ]
+  },
+  "setup_and_execution_guide": {
+    "prerequisites": [
+      "Java Development Kit (JDK) 17 or higher (tested up to JDK 25)",
+      "MySQL Server 8.0+ / MariaDB (e.g. via XAMPP Control Panel) or Aiven Cloud MySQL",
+      "Git CLI & Modern Web Browser (Chrome, Edge, Firefox, Safari)"
+    ],
+    "database_setup_instructions": {
+      "local_xampp": {
+        "step_1": "Start the MySQL module in XAMPP Control Panel (Port 3306).",
+        "step_2": "Spring Boot will automatically create the `hospital_db` database if not present.",
+        "step_3": "Optionally import `Hospital_Management_Database_PUBLIC.sql` via phpMyAdmin or MySQL Workbench if manual initialization is desired."
+      },
+      "aiven_cloud": {
+        "step_1": "Obtain cloud database credentials from Aiven Console.",
+        "step_2": "Provide environment variables: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`."
+      }
+    },
+    "execution_commands": {
+      "windows_batch": ".\\run.bat",
+      "windows_powershell": ".\\mvnw.cmd spring-boot:run",
+      "unix_macos": "./mvnw spring-boot:run"
+    },
+    "access_url": "http://localhost:8080"
+  }
+}

@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # 1. MySQL 8.0 Database Service
+  # ============================================================================
+  mysql-db:
+    image: mysql:8.0
+    container_name: medcare-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: medcare_secure_pass_2026
+      MYSQL_DATABASE: hospital_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - medcare_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================================
+  # 2. MedCare Spring Boot Web Application
+  # ============================================================================
+  medcare-app:
+    build: .
+    container_name: medcare-app
+    restart: always
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://mysql-db:3306/hospital_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: medcare_secure_pass_2026
+      DDL_AUTO: update
+      JAVA_OPTS: "-Xms256m -Xmx768m"
+    ports:
+      - "80:8080"
+    volumes:
+      - medcare_uploads:/app/uploads
+
+volumes:
+  medcare_mysql_data:
+  medcare_uploads:
