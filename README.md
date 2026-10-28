@@ -25,7 +25,7 @@ As the **Backend Developer** for **MedCare**, I architected and implemented the 
 
 The backend is built with **Java 17+** and **Spring Boot 3.2.5**, utilizing **Spring Security 6** for Role-Based Access Control (RBAC), **Spring Data JPA / Hibernate 6** for database abstraction, and **MySQL 8.0** with **HikariCP** connection pooling.
 
-> 📖 **Comprehensive Technical Report**: For detailed class diagrams, ER models, security filter internals, and the engineering roadmap, see the [Senior Backend Developer Technical Report](BACKEND_DEVELOPER_REPORT.md).
+> 📖 **Comprehensive Technical Report**: For detailed class diagrams, ER models, security filter internals, and the engineering roadmap, see the [Backend Developer Technical Report](BACKEND_DEVELOPER_REPORT.md).
 
 ---
 
